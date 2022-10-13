@@ -101,7 +101,7 @@ p_sps <- res %>%
     vjust = 0.2
   ))
 
-p_sps
+#p_sps
 
 res %>%
   dplyr::filter(grepl("SPS", sensor)) %>%
@@ -146,7 +146,7 @@ p_sps_sum <- res %>%
     colour = "sienna"
   )
 
-p_sps_sum
+#p_sps_sum
 legend <- get_legend(# create some space to the left of the legend
   p_sps +
     guides(color = guide_legend(ncol = 1, title = "Sensors")) +
@@ -164,7 +164,7 @@ pg <-
     labels = c("(a)", "(b)"),
     label_y = c(0.1, 0.1)
   )
-pg
+#pg
 pg_l <- plot_grid(pg,
                   legend,
                   ncol = 2,
@@ -219,7 +219,7 @@ ggsave2(
   width = 190
 )
 
-p_pms
+#p_pms
 
 
 
@@ -289,7 +289,7 @@ pg <-
     labels = c("(a)", "(b)"),
     label_y = c(0.1, 0.1)
   )
-pg
+#pg
 pg_l <- plot_grid(pg,
                   legend,
                   ncol = 2,
@@ -310,19 +310,6 @@ ggsave2(
 
 
 
-```{r}
-
-res %>%
-  dplyr::filter(grepl("SPS", sensor)) %>%
-  dplyr::filter(RMSE > 5) %>%
-  dplyr::select(sensor, method) %>%
-  group_by(sensor, method) %>%
-  summarise(n())
-
-
-
-
-```
 
 # Expanded uncertainty
 
@@ -334,7 +321,7 @@ p_sps <- res %>%
   dplyr::filter(grepl("SPS", sensor)) %>%
   dplyr::filter(type == "Full") %>%
   dplyr::filter(dataset_type == "cal") %>%
-  ggplot(aes(x = method, y = expanded_uncertainty, colour = sensor)) +
+  ggplot(aes(x = method, y = expanded_uncertainty*100, colour = sensor)) +
   stat_boxplot(geom = 'errorbar') +
   geom_boxplot(
     fatten = 0.8,
@@ -344,16 +331,16 @@ p_sps <- res %>%
   ) +
   custom_theme +
   xlab("Calibration method") +
-  ylab(quickText("expanded_uncertainty (ug/m3)")) +
+  ylab(quickText("expanded_uncertainty (%)")) +
   labs(colour = "Sensors") +
   scale_y_continuous(labels = scaleFUN,
-                     limits = quantile(res$expanded_uncertainty, c(0.1, 0.9), na.rm = T)) +
+                     limits = quantile(res$expanded_uncertainty*100, c(0.1, 0.9), na.rm = T)) +
   theme(axis.text.x = element_text(
     angle = 90,
     hjust = 0.95,
     vjust = 0.2
   )) 
-p_sps
+#p_sps
 
 res %>%
   dplyr::filter(grepl("SPS", sensor)) %>%
@@ -381,7 +368,7 @@ p_sps_sum <- res %>%
   dplyr::filter(grepl("SPS", sensor)) %>%
   dplyr::filter(type == "Full") %>%
   dplyr::filter(dataset_type == "cal") %>%
-  ggplot(aes(x = method, y = expanded_uncertainty)) +
+  ggplot(aes(x = method, y = expanded_uncertainty*100)) +
   stat_boxplot(geom = 'errorbar') +
   geom_boxplot(
     fatten = 0.8,
@@ -390,9 +377,9 @@ p_sps_sum <- res %>%
     lwd = 0.2
   ) +
   xlab("Calibration method") +
-  ylab(quickText("expanded_uncertainty (ug/m3)")) +
+  ylab(quickText("expanded_uncertainty (%)")) +
   scale_y_continuous(labels = scaleFUN,
-                     limits = quantile(res$expanded_uncertainty, c(0.1, 0.9), na.rm = T)) +
+                     limits = quantile(res$expanded_uncertainty*100, c(0.1, 0.9), na.rm = T)) +
   custom_theme +
   theme(axis.text.x = element_text(
     angle = 90,
@@ -419,7 +406,7 @@ pg <-
     labels = c("(a)", "(b)"),
     label_y = c(0.1, 0.1)
   )
-pg
+#pg
 pg_l <- plot_grid(pg,
                   legend,
                   ncol = 2,
@@ -444,7 +431,7 @@ p_pms <- res %>%
   dplyr::filter(grepl("PMS", sensor)) %>%
   dplyr::filter(type == "Full") %>%
   dplyr::filter(dataset_type == "cal") %>%
-  ggplot(aes(x = method, y = expanded_uncertainty, colour = sensor)) +
+  ggplot(aes(x = method, y = expanded_uncertainty*100, colour = sensor)) +
   stat_boxplot(geom = 'errorbar') +
   geom_boxplot(
     fatten = 0.8,
@@ -454,10 +441,10 @@ p_pms <- res %>%
   ) +
   custom_theme +
   xlab("Calibration method") +
-  ylab(quickText("expanded_uncertainty (ug/m3)")) +
+  ylab(quickText("expanded_uncertainty (%)")) +
   labs(colour = "Sensors") +
   scale_y_continuous(labels = scaleFUN,
-                     limits = quantile(res$expanded_uncertainty, c(0.1, 0.9), na.rm = T)) +
+                     limits = quantile(res$expanded_uncertainty*100, c(0.1, 0.9), na.rm = T)) +
   theme(axis.text.x = element_text(
     angle = 90,
     hjust = 0.95,
@@ -501,7 +488,7 @@ p_pms_sum <- res %>%
   dplyr::filter(grepl("PMS", sensor)) %>%
   dplyr::filter(type == "Full") %>%
   dplyr::filter(dataset_type == "cal") %>%
-  ggplot(aes(x = reorder(method, expanded_uncertainty), y = expanded_uncertainty)) +
+  ggplot(aes(x = reorder(method, expanded_uncertainty), y = expanded_uncertainty*100)) +
   stat_boxplot(geom = 'errorbar', width = 0.5, size = 0.1) +
   geom_boxplot(
     fatten = 0.8,
@@ -513,7 +500,7 @@ p_pms_sum <- res %>%
   ylab(quickText("expanded_uncertainty (%)")) +
   custom_theme +
   scale_y_continuous(labels = scaleFUN,
-                     limits = quantile(res$expanded_uncertainty, c(0.1, 0.9), na.rm = T)) +
+                     limits = quantile(res$expanded_uncertainty*100, c(0.1, 0.9), na.rm = T)) +
   theme(axis.text.x = element_text(
     angle = 90,
     hjust = 0.95,
@@ -582,6 +569,7 @@ p_sps_sum <- res_bus %>%
   ylab(quickText("Between unit-uncertainty (ug/m3)")) +
   scale_y_continuous(labels = scaleFUN,
                      limits = quantile(res_bus$usb, c(0.1, 0.9), na.rm = T)) +
+    ggtitle(label = "SPS") +
   custom_theme +
   theme(axis.text.x = element_text(
     angle = 90,
@@ -611,6 +599,7 @@ p_pms_sum <- res_bus %>%
   ) +
   xlab("Calibration method") +
   ylab(quickText("Between unit-uncertainty (ug/m3)")) +
+    ggtitle(label = "PMS") +
   scale_y_continuous(labels = scaleFUN,
                      limits = quantile(res_bus$usb, c(0.1, 0.9), na.rm = T)) +
   custom_theme +
@@ -630,9 +619,6 @@ p_pms_sum
 ```{r}
 
 
-
-
-
 p_sps_sum <- res %>%
   dplyr::filter(type == "Full") %>%
   dplyr::filter(grepl("SPS", sensor)) %>%
@@ -648,6 +634,7 @@ p_sps_sum <- res %>%
   geom_boxplot(width = 0.1) +
   xlab("Calibration method") +
   ylab(quickText("CV")) +
+    ggtitle(label = "SPS") +
   scale_y_continuous(labels = scaleFUN, limits = quantile(res$cv, c(0.1, 0.9), na.rm =
                                                             T)) +
   custom_theme +
@@ -674,6 +661,7 @@ p_pms_sum <- res %>%
   geom_boxplot(width = 0.1) +
   xlab("Calibration method") +
   ylab(quickText("CV")) +
+  ggtitle(label = "PMS") +
   scale_y_continuous(labels = scaleFUN, limits = quantile(res$cv, c(0.1, 0.9), na.rm =
                                                             T)) +
   custom_theme +
@@ -687,137 +675,3 @@ p_pms_sum
 
 ```
 
-
-# Statistical differences between the methods per sensor_type
-
-
-```{r}
-require(rstatix)
-res %>%
-  dplyr::filter(type == "Full") %>%
-  dplyr::filter(dataset_type == "cal") %>%
-  group_by(grepl("SPS", sensor), method) %>%
-  shapiro_test(RMSE)
-
-res %>%
-  dplyr::filter(type == "Full") %>%
-  dplyr::filter(dataset_type == "cal") %>%
-  na.exclude() %>%
-  dplyr::filter(grepl("PMS", sensor)) %>%
-  group_by(grepl("SPS", sensor)) %>%
-  levene_test(RMSE ~ method)
-
-res %>%
-  dplyr::filter(type == "Full") %>%
-  dplyr::filter(dataset_type == "cal") %>%
-  na.exclude() %>%
-  dplyr::filter(grepl("SPS", sensor)) %>%
-  group_by(grepl("SPS", sensor)) %>%
-  levene_test(RMSE ~ method)
-
-```
-
-The groups are all normal. The PMS combination does not all have homogeneous
-variances.
-
-```{r}
-
-
-res  %>%
-  dplyr::filter(type == "Full") %>%
-  dplyr::filter(dataset_type == "cal") %>%
-  #na.exclude() %>%
-  dplyr::filter(grepl("PMS", sensor)) %>%
-  dplyr::select(RMSE, method) %>%
-  group_by(method) %>%
-  summarise(n())
-
-
-stat.test_pms <- res  %>%
-  dplyr::filter(type == "Full") %>%
-  dplyr::filter(dataset_type == "cal") %>%
-  #na.exclude() %>%
-  dplyr::filter(grepl("PMS", sensor)) %>%
-  dplyr::select(RMSE, method) %>%
-  # ungroup() %>%
-  #group_by(method) %>%
-  t_test(RMSE ~ method, var.equal = F, ref.group = "Initial") %>%
-  add_significance()
-
-
-t
-
-
-stat.test_pms <- stat.test_pms %>%
-  add_xy_position(x = "method", dodge = 0.8) %>%
-  add_significance()
-
-
-p_pms <- res %>%
-  dplyr::filter(grepl("PMS", sensor)) %>%
-  dplyr::filter(type == "Full") %>%
-  dplyr::filter(dataset_type == "cal") %>%
-  ggplot(aes(x = sensor, y = RMSE, colour = method)) +
-  stat_boxplot(geom = 'errorbar') +
-  geom_boxplot(
-    fatten = 0.8,
-    outlier.size = 0.8,
-    outlier.alpha = 0.5,
-    lwd = 0.2
-  ) +
-  custom_theme +
-  xlab("Calibration method") +
-  ylab(quickText("RMSE (ug/m3)")) +
-  labs(colour = "Sensors") +
-  scale_y_continuous(labels = scaleFUN, limits = quantile(res$RMSE, c(0.1, 0.9))) +
-  theme(axis.text.x = element_text(
-    angle = 90,
-    hjust = 0.95,
-    vjust = 0.2
-  )) #+
-
-
-# p_pms<-p_pms + stat_pvalue_manual(
-#     stat.test_pms, label = "p.adj.signif", tip.length = 0.01,
-#     bracket.nudge.y = 0, hide.ns= T
-#     ) +
-#   scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
-#
-# p_pms
-
-
-p_pms_sum <- res %>%
-  dplyr::filter(grepl("PMS", sensor)) %>%
-  dplyr::filter(type == "Full") %>%
-  dplyr::filter(dataset_type == "cal") %>%
-  ggplot(aes(x = method, y = RMSE)) +
-  stat_boxplot(geom = 'errorbar', width = 0.5, size = 0.1) +
-  geom_boxplot(
-    fatten = 0.8,
-    outlier.size = 0.8,
-    outlier.alpha = 0.5,
-    lwd = 0.2
-  ) +
-  xlab("Calibration method") +
-  ylab(quickText("RMSE (ug/m3)")) +
-  custom_theme +
-  scale_y_continuous(labels = scaleFUN, limits = quantile(res$RMSE, c(0.1, 0.9))) +
-  theme(axis.text.x = element_text(
-    angle = 90,
-    hjust = 0.95,
-    vjust = 0.2
-  )) #+
-
-
-p_pms_sum <- p_pms_sum + stat_pvalue_manual(
-  stat.test_pms,
-  label = "p.adj.signif",
-  tip.length = 0.01,
-  bracket.nudge.y = 0,
-  hide.ns = T
-) +
-  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
-
-p_pms_sum
-
-```

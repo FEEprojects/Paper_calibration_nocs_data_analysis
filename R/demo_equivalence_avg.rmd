@@ -1,0 +1,652 @@
+---
+title: "Demonstration of equivalence for different time averages and comparison"
+author: "FMJ Bulot"
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output:
+  html_document:
+    df_print: paged
+    code_folding: hide
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+knit: (function(inputFile, encoding) { 
+      out_dir <- '../docs/';
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_file=file.path(dirname(inputFile), out_dir, 'demo_equivalence_avg.html'))})
+editor_options: 
+  markdown: 
+    wrap: 80
+---
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=12, fig.height=8, fig.path='../Figs/demo_equivalence_avg/',warning=FALSE, message=FALSE)
+```
+
+This notebook presents the time series of the data recorded by the
+sensors during the duration of the NOCS study. In this notebook, we
+check whether the sensors match the criteria for the demonstration of
+equivalence at different time resolution.
+
+Results are calculated in a separate script,  
+`demo_equivalence/demo_equivalence_avg.r`, as they are long to compute. 
+They are stored in `output/demo_equivalence_avg.r`
+
+```{r setup, message=F}
+
+
+source("utilities/utilities.R")
+source("utilities/nested_models.r")
+source("utilities/variables.r")
+
+input_folder <- paste0(here::here(), "/output/demo_equivalence_avg/")
+
+```
+
+# Impact of the time averaging on the metrics  {.tabset .tabset-pills}
+
+```{r}
+res_2min <- readRDS(paste0(input_folder, "res_2min_dates.rds"))
+
+res_2min_ue <- lapply(res_2min, function(x)
+  bind_rows(x$res)) %>%
+  bind_rows
+res_2min_bus <-
+  lapply(res_2min, function(x)
+    bind_rows(x$res_bus)) %>%
+  bind_rows
+
+res_1h <- readRDS(paste0(input_folder, "res_1h_dates.rds"))
+
+res_1h_ue <- lapply(res_1h, function(x)
+  bind_rows(x$res)) %>%
+  bind_rows
+res_1h_bus <- lapply(res_1h, function(x)
+  bind_rows(x$res_bus)) %>%
+  bind_rows
+
+res_1d <- readRDS(paste0(input_folder, "res_1day_dates.rds"))
+
+res_1d_ue <- lapply(res_1d, function(x)
+  bind_rows(x$res)) %>%
+  bind_rows
+res_1d_bus <- lapply(res_1d, function(x)
+  bind_rows(x$res_bus)) %>%
+  bind_rows
+
+res_bind_ue <- res_1h_ue %>%
+  bind_rows(res_1d_ue) %>%
+  bind_rows(res_2min_ue) %>%
+  dplyr::filter(!grepl("N2", sensor)) %>%
+  dplyr::mutate(expanded_uncertainty = expanded_uncertainty * 100) %>%
+  mutate(sensor_type = ifelse(grepl("SPS", sensor), "SPS30", "PMS5003"))
+
+res_bind_bus <- res_1h_bus %>%
+  bind_rows(res_1d_bus) %>%
+  bind_rows(res_2min_bus) %>%
+  dplyr::filter(!grepl("N2", combination)) %>%
+  dplyr::filter(!(grepl("SPS", combination) &
+                    grepl("PMS", combination))) %>%
+  mutate(sensor_type = ifelse(grepl("SPS", combination), "SPS30", "PMS5003"))
+
+```
+
+## Expanded uncertainty
+
+```{r, echo=FALSE}
+
+p <- res_bind_ue %>%
+  dplyr::filter(type == "Full") %>%
+  ggplot(aes(y = expanded_uncertainty, x = sensor, colour = method)) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(fatten = 0.8,
+               outlier.size = 0.8,
+               outlier.alpha = 0.5) +
+  geom_hline(yintercept = 50, linetype = 3) +
+  ylab(quickText("Expanded uncertainty (%)")) +
+  custom_theme +
+  facet_wrap( ~ sensor_type, scales = "free", ncol = 1) +
+  theme(axis.text.x = element_text(
+    angle = 45,
+    vjust = 1,
+    hjust = 1
+  ))
+p
+
+res_bind_ue %>%
+  dplyr::filter(type == "Full") %>%
+  group_by(sensor_type, method) %>%
+  summarise(
+    max(expanded_uncertainty, na.rm = T),
+    min(expanded_uncertainty, na.rm = T),
+    quant25 = quantile(
+      expanded_uncertainty,
+      probs = c(0.25),
+      na.rm = T
+    ),
+    quant75 = quantile(
+      expanded_uncertainty,
+      probs = c(0.75),
+      na.rm = T
+    ),
+    median(expanded_uncertainty, na.rm = T)
+  )
+
+```
+
+### Plot with significance levels
+
+We conduct a shapiro test to test the normality assumption on the expanded 
+uncertainty and a Levene test to test the assumption 
+that variances are homogeneous.
+
+#### Shapiro test
+```{r}
+
+
+res_bind_ue %>%
+  dplyr::filter(type == "Full") %>%
+  group_by(sensor, sensor_type, method) %>%
+  shapiro_test(expanded_uncertainty)
+```
+
+#### Levene test
+
+```{r}
+res_bind_ue %>%
+  dplyr::filter(type == "Full") %>%
+  na.exclude() %>%
+  dplyr::filter(sensor_type == "PMS5003") %>%
+  group_by(sensor) %>%
+  levene_test(expanded_uncertainty ~ method)
+
+res_bind_ue %>%
+  dplyr::filter(type == "Full") %>%
+  na.exclude() %>%
+  dplyr::filter(sensor_type == "SPS30") %>%
+  group_by(sensor) %>%
+  levene_test(expanded_uncertainty ~ method)
+
+
+```
+
+The data are not different from a normal distribution. The variances are
+homogeneous for the SPS but not for some of the PMS.
+
+```{r}
+
+stat.test_pms <- res_bind_ue %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(sensor_type == "PMS5003") %>%
+  na.exclude() %>%
+  group_by(sensor, sensor_type) %>%
+  t_test(expanded_uncertainty ~ method, var.equal = FALSE) %>%
+  add_significance()
+
+stat.test_pms <- stat.test_pms %>%
+  add_xy_position(x = "sensor", dodge = 0.8)
+
+
+p_pms <- res_bind_ue %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(sensor_type == "PMS5003") %>%
+  ggplot(aes(y = expanded_uncertainty, x = sensor, colour = method)) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(fatten = 0.8,
+               outlier.size = 0.8,
+               outlier.alpha = 0.5) +
+  geom_hline(yintercept = 50, linetype = 3) +
+  ylab(quickText("Expanded uncertainty (%)")) +
+  custom_theme +
+  facet_wrap( ~ sensor_type, scales = "free") +
+  theme(axis.text.x = element_text(
+    angle = 45,
+    vjust = 1,
+    hjust = 1
+  ))
+#p_pms
+
+p_pms <- p_pms + stat_pvalue_manual(
+  stat.test_pms,
+  label = "p.adj.signif",
+  tip.length = 0.01,
+  bracket.nudge.y = 0,
+  hide.ns = T
+) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
+
+p_sps <- res_bind_ue %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(sensor_type == "SPS30") %>%
+  ggplot(aes(y = expanded_uncertainty, x = sensor, colour = method)) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(fatten = 0.8,
+               outlier.size = 0.8,
+               outlier.alpha = 0.5) +
+  geom_hline(yintercept = 50, linetype = 3) +
+  ylab(quickText("Expanded uncertainty (%)")) +
+  xlab("Sensors") +
+  custom_theme +
+  facet_wrap( ~ sensor_type, scales = "free") +
+  theme(axis.text.x = element_text(
+    angle = 45,
+    vjust = 1,
+    hjust = 1
+  ))
+
+stat.test_sps <- res_bind_ue %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(sensor_type == "SPS30") %>%
+  na.exclude() %>%
+  group_by(sensor, sensor_type) %>%
+  t_test(expanded_uncertainty ~ method) %>%
+  add_significance()
+
+stat.test_sps <- stat.test_sps %>%
+  add_xy_position(x = "sensor", dodge = 0.8)
+
+p_sps <- p_sps + stat_pvalue_manual(
+  stat.test_sps,
+  label = "p.adj.signif",
+  tip.length = 0.01,
+  bracket.nudge.y = 0,
+  hide.ns = T
+) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
+#p_sps
+#https://www.datanovia.com/en/blog/how-to-add-p-values-onto-a-grouped-ggplot-using-the-ggpubr-r-package/
+
+
+p <- plot_grid(p_pms + xlab(NULL),
+               p_sps,
+               nrow = 2)
+p
+p %>%
+  ggsave2(
+    filename = paste0(PLOT_OUTPUT_FOLDER, "demo_equivalence_avg.svg"),
+    height = 140,
+    units = "mm"
+  )
+
+```
+
+## Between unit uncertainty
+
+```{r, echo=FALSE}
+
+
+p <- res_bind_bus %>%
+  dplyr::filter(type == "Full") %>%
+  ggplot(aes(
+    x = reorder(str_remove_all(combination, "SPS-|PMS-"), usb),
+    y = usb,
+    colour = method
+  )) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(fatten = 0.8,
+               outlier.size = 0.8,
+               outlier.alpha = 0.5) +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  ylab(quickText("Between unit uncertainty (ug/m3)")) +
+  xlab("Combinations") +
+  facet_wrap( ~ sensor_type, scales = "free_x", ncol = 1) +
+  theme(axis.text.x = element_text(
+    angle = 45,
+    vjust = 1,
+    hjust = 1
+  ))
+
+p
+
+res_bind_bus %>%
+  dplyr::filter(type == "Full") %>%
+  group_by(sensor_type, method) %>%
+  summarise(
+    max(usb, na.rm = T),
+    min(usb, na.rm = T),
+    quant25 = quantile(usb, probs = c(0.25), na.rm = T),
+    quant75 = quantile(usb, probs = c(0.75), na.rm = T),
+    median(usb, na.rm = T)
+  )
+
+```
+
+### Plot with significance levels
+
+#### Shapiro test
+
+```{r}
+
+
+res_bind_bus %>%
+  dplyr::filter(type == "Full") %>%
+  group_by(combination, sensor_type, method) %>%
+  shapiro_test(usb)
+```
+
+#### Levene test
+
+```{r}
+res_bind_bus %>%
+  dplyr::filter(type == "Full") %>%
+  na.exclude() %>%
+  dplyr::filter(sensor_type == "PMS5003") %>%
+  group_by(combination) %>%
+  levene_test(usb ~ method)
+
+res_bind_bus %>%
+  dplyr::filter(type == "Full") %>%
+  na.exclude() %>%
+  dplyr::filter(sensor_type == "SPS30") %>%
+  group_by(combination) %>%
+  levene_test(usb ~ method)
+
+```
+
+The groups are all normal. The PMS combination does not all have
+homogeneous variances.
+
+```{r}
+
+stat.test_pms <- res_bind_bus  %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(sensor_type == "PMS5003") %>%
+  na.exclude() %>%
+  group_by(combination, sensor_type) %>%
+  t_test(usb ~ method, var.equal = FALSE) %>%
+  add_significance()
+
+stat.test_pms <- stat.test_pms %>%
+  add_xy_position(x = "combination", dodge = 0.8)
+
+
+p_pms <- res_bind_bus %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(sensor_type == "PMS5003") %>%
+  ggplot(aes(
+    x = str_remove_all(combination, "SPS-|PMS-"),
+    y = usb,
+    colour = method
+  )) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(fatten = 0.8,
+               outlier.size = 0.8,
+               outlier.alpha = 0.5) +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  ylab(quickText("Between unit uncertainty (ug/m3)")) +
+  xlab("Combinations") +
+  facet_wrap( ~ sensor_type, scales = "free_x", ncol = 1) +
+  theme(axis.text.x = element_text(
+    angle = 45,
+    vjust = 1,
+    hjust = 1
+  ))
+#
+
+p_pms <- p_pms + stat_pvalue_manual(
+  stat.test_pms,
+  label = "p.adj.signif",
+  tip.length = 0.01,
+  bracket.nudge.y = 0,
+  hide.ns = T
+) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
+
+p_sps <- res_bind_bus %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(sensor_type == "SPS30") %>%
+  ggplot(aes(
+    x = str_remove_all(combination, "SPS-|PMS-"),
+    y = usb,
+    colour = method
+  )) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(fatten = 0.8,
+               outlier.size = 0.8,
+               outlier.alpha = 0.5) +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  ylab(quickText("Between unit uncertainty (ug/m3)")) +
+  xlab("Combinations") +
+  facet_wrap( ~ sensor_type, scales = "free_x", ncol = 1) +
+  theme(axis.text.x = element_text(
+    angle = 45,
+    vjust = 1,
+    hjust = 1
+  ))
+
+stat.test_sps <- res_bind_bus  %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(sensor_type == "SPS30") %>%
+  na.exclude() %>%
+  group_by(combination, sensor_type) %>%
+  t_test(usb ~ method, var.equal = TRUE) %>%
+  add_significance()
+
+stat.test_sps <- stat.test_sps %>%
+  add_xy_position(x = "combination", dodge = 0.8)
+
+p_sps <- p_sps + stat_pvalue_manual(
+  stat.test_sps,
+  label = "p.adj.signif",
+  tip.length = 0.01,
+  bracket.nudge.y = 0,
+  hide.ns = T
+) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
+#p_sps
+
+p <- plot_grid(p_pms + xlab(NULL),
+               p_sps,
+               nrow = 2)
+
+p %>%
+  ggsave2(
+    filename = paste0(PLOT_OUTPUT_FOLDER, "demo_equivalence_avg_buu.svg"),
+    height = 140,
+    units = "mm"
+  )
+p
+```
+
+## U
+
+```{r}
+
+
+equivalence_avg_comparison <- function(res_bind_ue, title, field) {
+  p_pms <- res_bind_ue %>%
+    dplyr::filter(type == "Full") %>%
+    ggplot(aes(y = .data[[field]], x = sensor, colour = method)) +
+    stat_boxplot(geom = 'errorbar') +
+    geom_boxplot(fatten = 0.8,
+                 outlier.size = 0.8,
+                 outlier.alpha = 0.5) +
+    ylab(quickText(title)) +
+    custom_theme +
+    facet_wrap( ~ sensor_type, scales = "free", ncol = 1) +
+    theme(axis.text.x = element_text(
+      angle = 45,
+      vjust = 1,
+      hjust = 1
+    ))
+  p_pms
+  
+  
+}
+
+equivalence_avg_comparison(res_bind_ue, title = "Expanded uncertainty USEPA (%)", field = "U")
+equivalence_avg_comparison(res_bind_ue, title = "RMSE (ug/m3)", field = "RMSE")
+equivalence_avg_comparison(res_bind_ue, title = "CV (%)", field = "cv")
+equivalence_avg_comparison(res_bind_ue, title = "R2", field = "r2")
+equivalence_avg_comparison(res_bind_ue, title = "Bias (ug/m3)", field = "y__")
+
+```
+
+## RMSE
+
+```{r}
+
+
+equivalence_avg_comparison(res_bind_ue, title = "RMSE (ug/m3)", field = "RMSE") %>%
+  ggsave2(
+    filename = paste0(PLOT_OUTPUT_FOLDER, "demo_equivalence_avg_RMSE.png"),
+    height = 140,
+    units = "mm"
+  )
+
+res_bind_ue %>%
+  dplyr::filter(type == "Full") %>%
+  group_by(sensor_type, method) %>%
+  summarise(
+    max(RMSE, na.rm = T),
+    min(RMSE, na.rm = T),
+    quant25 = quantile(RMSE, probs = c(0.25), na.rm = T),
+    quant75 = quantile(RMSE, probs = c(0.75), na.rm = T),
+    median(RMSE, na.rm = T)
+  )
+
+```
+
+### Plot with significance levels
+
+#### Shapiro test
+
+```{r}
+
+
+res_bind_ue %>%
+  dplyr::filter(type == "Full") %>%
+  group_by(sensor, sensor_type, method) %>%
+  shapiro_test(RMSE)
+```
+
+
+#### Levene test
+
+```{r}
+res_bind_ue %>%
+  dplyr::filter(type == "Full") %>%
+  na.exclude() %>%
+  dplyr::filter(sensor_type == "PMS5003") %>%
+  group_by(sensor) %>%
+  levene_test(RMSE ~ method)
+
+res_bind_ue %>%
+  dplyr::filter(type == "Full") %>%
+  na.exclude() %>%
+  dplyr::filter(sensor_type == "SPS30") %>%
+  group_by(sensor) %>%
+  levene_test(RMSE ~ method)
+
+```
+
+The data are not different from a normal distribution. The variances are
+homogeneous for both models of sensors.
+
+```{r}
+
+stat.test_pms <- res_bind_ue %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(sensor_type == "PMS5003") %>%
+  na.exclude() %>%
+  group_by(sensor, sensor_type) %>%
+  t_test(RMSE ~ method, var.equal = TRUE) %>%
+  add_significance()
+
+stat.test_pms <- stat.test_pms %>%
+  add_xy_position(x = "sensor", dodge = 0.8)
+
+p_pms <- res_bind_ue %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(sensor_type == "PMS5003") %>%
+  ggplot(aes(y = RMSE, x = sensor, colour = method)) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(fatten = 0.8,
+               outlier.size = 0.8,
+               outlier.alpha = 0.5) +
+  ylab(quickText("RMSE (ug/m3)")) +
+  custom_theme +
+  facet_wrap( ~ sensor_type, scales = "free") +
+  theme(axis.text.x = element_text(
+    angle = 45,
+    vjust = 1,
+    hjust = 1
+  ))
+#p_pms
+
+p_pms <- p_pms + stat_pvalue_manual(
+  stat.test_pms,
+  label = "p.adj.signif",
+  tip.length = 0.01,
+  bracket.nudge.y = 0,
+  hide.ns = T
+) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
+
+p_sps <- res_bind_ue %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(sensor_type == "SPS30") %>%
+  ggplot(aes(y = RMSE, x = sensor, colour = method)) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(fatten = 0.8,
+               outlier.size = 0.8,
+               outlier.alpha = 0.5) +
+  ylab(quickText("RMSE (ug/m3)")) +
+  custom_theme +
+  facet_wrap( ~ sensor_type, scales = "free") +
+  theme(axis.text.x = element_text(
+    angle = 45,
+    vjust = 1,
+    hjust = 1
+  ))
+
+stat.test_sps <- res_bind_ue %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(sensor_type == "SPS30") %>%
+  na.exclude() %>%
+  group_by(sensor, sensor_type) %>%
+  t_test(RMSE ~ method) %>%
+  add_significance()
+
+stat.test_sps <- stat.test_sps %>%
+  add_xy_position(x = "sensor", dodge = 0.8)
+
+p_sps <- p_sps + stat_pvalue_manual(
+  stat.test_sps,
+  label = "p.adj.signif",
+  tip.length = 0.01,
+  bracket.nudge.y = 0,
+  hide.ns = T
+) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)))
+p_sps
+#https://www.datanovia.com/en/blog/how-to-add-p-values-onto-a-grouped-ggplot-using-the-ggpubr-r-package/
+
+p <- plot_grid(p_pms + xlab(NULL),
+               p_sps,
+               nrow = 2)
+p %>%
+  ggsave2(
+    filename = paste0(PLOT_OUTPUT_FOLDER, "demo_equivalence_avg_RMSE.svg"),
+    height = 140,
+    units = "mm"
+  )
+
+p
+```

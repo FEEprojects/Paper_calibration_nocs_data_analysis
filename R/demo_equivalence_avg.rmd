@@ -24,10 +24,8 @@ editor_options:
 knitr::opts_chunk$set(fig.width=12, fig.height=8, fig.path='../Figs/demo_equivalence_avg/',warning=FALSE, message=FALSE)
 ```
 
-This notebook presents the time series of the data recorded by the
-sensors during the duration of the NOCS study. In this notebook, we
-check whether the sensors match the criteria for the demonstration of
-equivalence at different time resolution.
+The demonstration of equivalence is calculated for each combination of 40 
+consecutive days in the data for each sensors at 2min, 1h and 1 day resolution.
 
 Results are calculated in a separate script,  
 `demo_equivalence/demo_equivalence_avg.r`, as they are long to compute. 

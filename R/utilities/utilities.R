@@ -7,6 +7,8 @@ require(forcats)
 require(cowplot)
 require(lubridate)
 require(splitstackshape)
+require(stringr)
+require(tidyr)
 
 
 custom_theme <- theme_bw() +

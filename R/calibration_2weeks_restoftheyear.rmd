@@ -1,0 +1,769 @@
+---
+title: "Calibration - 2weeks + evolution"
+author: "FMJ Bulot"
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output:
+  html_document:
+    df_print: paged
+    code_folding: hide
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+knit: (function(inputFile, encoding) { 
+      out_dir <- '../docs';
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_file=file.path(dirname(inputFile), out_dir, 'calibration_2weeks_restoftheyear.html'))})
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=12, fig.height=8, fig.path='../Figs/calibration_2weeks_restoftheyear/',warning=FALSE, message=FALSE)
+```
+
+This notebook presents the results from the scripts in the subfolder 
+`calibration_2weeks_restoftheyear`.
+
+The sensors are calibrated using a range of methods using the first 2 weeks 
+of the data at a 2min resolution. 
+
+The performances of the calibration is then assessed throughout the year, 
+per month first and then per weeks with the calculations being done by 
+`calibration_2weeks_restoftheyear/calibration_2weeks_restoftheyear.r` and 
+aggregated by 
+`calibration_2weeks_restoftheyear/calibration_2weeks_restoftheyear_agg.r`.
+
+```{r setup, message=F}
+
+
+
+source("utilities/utilities.R")
+source("utilities/nested_models.r")
+source("utilities/variables.r")
+
+input_folder <- paste0(here::here(), "/output/calibration/2weeks_restoftheyear_agg/")
+
+```
+
+
+# Data preparation
+
+```{r}
+
+res_ue_per_month_initial <-
+  readRDS(paste0(input_folder, "res_ue_per_month_initial.rds")) %>%
+  mutate(cutMonth = as.POSIXct(cutMonth))
+
+res_bus_per_month_initial <-
+  readRDS(paste0(input_folder, "res_bus_per_month_initial.rds")) %>%
+  mutate(cutMonth = as.POSIXct(cutMonth))
+
+res_bus_per_month <-
+  readRDS(
+    paste0(
+      input_folder,
+      "results_bus_per_month_pms_calibration_2weeks_restofyear.rds"
+    )
+  ) %>%
+  bind_rows(res_bus_per_month_initial)
+
+res_eu_per_month <-
+  readRDS(
+    paste0(
+      input_folder,
+      "results_ue_per_month_pms_calibration_2weeks_restofyear.rds"
+    )
+  ) %>%
+  bind_rows(res_ue_per_month_initial)
+
+res_bus_per_month_sps <-
+  readRDS(
+    paste0(
+      input_folder,
+      "results_bus_per_month_sps_calibration_2weeks_restofyear.rds"
+    )
+  )
+
+res_eu_per_month_sps <-
+  readRDS(
+    paste0(
+      input_folder,
+      "results_ue_per_month_sps_calibration_2weeks_restofyear.rds"
+    )
+  )
+
+
+
+res_bus_per_month <- res_bus_per_month %>%
+  bind_rows(res_bus_per_month_sps)
+res_eu_per_month <- res_eu_per_month %>%
+  bind_rows(res_eu_per_month_sps)
+
+res_eu_per_month$method <-
+  fct_recode(
+    res_eu_per_month$method,
+    `MLR_part.` =  "PM25_corr_lm_part_number",
+    `MLR_part.+RH` =   "PM25_corr_lm_part_number_rh",
+    `LR` = "PM25_corr_LR",
+    `MLR_RH` = "PM25_corr_MLR1" ,
+    `OLS` =  "PM25_corr_ols",
+    `RLM` = "PM25_corr_RLM",
+    `RLM_part.+RH`  = "PM25_corr_RLM_rh_part",
+    `RLM+RH` =      "PM25_corr_RLM_rh",
+    `Koehler_mass+LR` = "PM25_corr_koehler_mass_LR"  ,
+    `Koehler_mass+OLS` = "PM25_corr_koehler_mass_ols" ,
+    `Laulainen+LR` = "PM25_corr_Laulainen_rh_LR",
+    `Laulainen+OLS` =  "PM25_corr_Laulainen_rh_ols",
+    `Koehler_mass` = "PM25_corr_koehler_mass",
+    `Koehler_size` = "PM25_corr_koehler_size",
+    `Koehler_size+LR` = "PM25_corr_koehler_size_LR",
+    `Koehler_size+OLS` = "PM25_corr_koehler_size_ols",
+    `Laulainen` = "PM25_corr_Laulainen_rh",
+    `RLM_part.` = "PM25_corr_RLM_part"
+  )
+
+
+res_eu_per_month$method <-
+  fct_relevel(
+    res_eu_per_month$method,
+    "Initial",
+    "OLS",
+    "LR",
+    "MLR_RH",
+    "MLR_part.",
+    "MLR_part.+RH",
+    "RLM",
+    "RLM+RH",
+    "RLM_part.",
+    "RLM_part.+RH",
+    "Koehler_mass",
+    "Koehler_mass+LR",
+    "Koehler_mass+OLS",
+    "Koehler_size",
+    "Koehler_size+LR",
+    "Koehler_size+OLS",
+    "Laulainen",
+    "Laulainen+LR",
+    "Laulainen+OLS"
+  )
+
+
+
+res_bus_per_month$method <-
+  fct_recode(
+    res_bus_per_month$method,
+    `MLR_part.` =  "PM25_corr_lm_part_number",
+    `MLR_part.+RH` =   "PM25_corr_lm_part_number_rh",
+    `LR` = "PM25_corr_LR",
+    `MLR_RH` = "PM25_corr_MLR1" ,
+    `OLS` =  "PM25_corr_ols",
+    `RLM` = "PM25_corr_RLM",
+    `RLM_part.+RH`  = "PM25_corr_RLM_rh_part",
+    `RLM+RH` =      "PM25_corr_RLM_rh",
+    `Koehler_mass+LR` = "PM25_corr_koehler_mass_LR"  ,
+    `Koehler_mass+OLS` = "PM25_corr_koehler_mass_ols" ,
+    `Laulainen+LR` = "PM25_corr_Laulainen_rh_LR",
+    `Laulainen+OLS` =  "PM25_corr_Laulainen_rh_ols",
+    `Koehler_mass` = "PM25_corr_koehler_mass",
+    `Koehler_size` = "PM25_corr_koehler_size",
+    `Koehler_size+LR` = "PM25_corr_koehler_size_LR",
+    `Koehler_size+OLS` = "PM25_corr_koehler_size_ols",
+    `Laulainen` = "PM25_corr_Laulainen_rh",
+    `RLM_part.` = "PM25_corr_RLM_part"
+  )
+
+res_bus_per_month <-
+  res_bus_per_month[res_bus_per_month$cutMonth != "2021-07-01", ]
+
+res_eu_per_month  <-
+  res_eu_per_month[res_eu_per_month$cutMonth != "2021-07-01", ]
+
+res_eu_per_month <-
+  res_eu_per_month[!grepl("N2", res_eu_per_month$results.sensor),]
+
+res_bus_per_month <-
+  res_bus_per_month[!grepl("N2", res_bus_per_month$results.combination), ]
+ 
+```
+ 
+# All methods
+
+## Separated
+ 
+```{r}
+scaleFUN <-
+  function(x)
+    sprintf("%.1f", x) # to have only one digit for the axis
+
+p <- res_eu_per_month %>%
+  dplyr::filter(results.type == "Full") %>%
+  dplyr::mutate(sensor_type = ifelse(grepl("SPS", results.sensor), "SPS30", "PMS5003")) %>%
+  dplyr::filter(!grepl("PM25_corr", method)) %>%
+  ggplot(aes(
+    x = as.factor(substr(cutMonth, 1, 7)),
+    y = results.RMSE,
+    colour = method
+  )) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.8,
+    outlier.alpha = 0.5,
+    lwd = 0.2,
+    outlier.shape = NA
+  ) +
+  custom_theme +
+  facet_wrap( ~ sensor_type) +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  ylab(quickText("RMSE (ug/m3)")) +
+  xlab("Start of the month") +
+  scale_y_continuous(labels = scaleFUN,
+                     limits = quantile(res_eu_per_month$results.RMSE, c(0.1, 0.9))) +
+  labs(colour = "Calibration method")
+#p
+
+p_bus_pms <- res_bus_per_month %>%
+  dplyr::filter(results.type == "Full") %>%
+  dplyr::mutate(sensor_type = ifelse(grepl("SPS", results.combination), "SPS30", "PMS5003")) %>%
+  ggplot(aes(
+    x = as.factor(substr(cutMonth, 1, 7)),
+    y = results.usb,
+    colour = method
+  )) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.8,
+    outlier.alpha = 0.5,
+    lwd = 0.2,
+    outlier.shape = NA
+  ) +
+  custom_theme +
+  xlab("Start of the month") +
+  ylab(quickText("Between unit uncertainty (ug/m3)")) +
+  facet_wrap( ~ sensor_type) +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  scale_y_continuous(labels = scaleFUN,
+                     limits = quantile(res_bus_per_month$results.usb, c(0.1, 0.9))) +
+  labs(colour = "Calibration method")
+
+#p_bus_pms
+
+legend <- get_legend(# create some space to the left of the legend
+  p_bus_pms +
+    guides(color = guide_legend(ncol = 1, title = "Calibration method")) +
+    theme(legend.box.margin = margin(0, 0, 0, 0)))
+pg <-
+  plot_grid(
+    p + xlab(NULL) + guides(x = "none") + theme(legend.position = "none"),
+    p_bus_pms + theme(legend.position = "none"),
+    nrow = 2,
+    labels = c("(a)", "(b)"),
+    label_y = 0.1
+  )
+pg_l <- plot_grid(pg,
+                  legend,
+                  ncol = 2,
+                  rel_widths = c(0.8, 0.2))
+
+#ggsave2(plot=pg_l, filename = paste0(output_folder, "2weeks_restoftheyear_permonth.png"),
+# width  = 190, units = "mm")
+pg_l
+
+
+```
+
+## Grouped
+
+The next graph present the variations of RMSE for all the methods grouped
+together.
+
+```{r}
+
+p <- res_eu_per_month %>%
+  dplyr::filter(results.type == "Full") %>%
+  dplyr::mutate(sensor_type = ifelse(grepl("SPS", results.sensor), "SPS30", "PMS5003")) %>%
+  dplyr::filter(!grepl("PM25_corr", method)) %>%
+  ggplot(aes(x = as.factor(substr(cutMonth, 1, 7)), y = results.RMSE)) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.8,
+    outlier.alpha = 0.5,
+    lwd = 0.2,
+    outlier.shape = NA
+  ) +
+  custom_theme +
+  facet_wrap( ~ sensor_type) +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  ylab(quickText("RMSE (ug/m3)")) +
+  xlab("Start of the month") +
+  scale_y_continuous(limits = c(0, 16)) +
+  labs(colour = "Calibration method") +
+  scale_color_brewer(palette = "Set1")
+
+p
+```
+
+
+
+
+# Selection of methods
+
+It is hard to see what is going on, too many methods. Let's pick one of each for
+the humidity correction methods.
+
+```{r}
+method_list_ft <-
+  c(
+    "Koehler_mass+LR",
+    "Koehler_size+LR",
+    "Laulainen+LR",
+    "MLR_part.+RH",
+    "LR",
+    "RLM_part.+RH",
+    "MLR_part.",
+    "RLM_part."
+  )
+
+res_eu_per_month_ft <- res_eu_per_month %>%
+  dplyr::filter(method %in% method_list_ft)
+
+res_bus_per_month_ft <- res_bus_per_month %>%
+  dplyr::filter(method %in% method_list_ft)
+
+
+p <- res_eu_per_month_ft %>%
+  dplyr::filter(results.type == "Full") %>%
+  dplyr::mutate(sensor_type = ifelse(grepl("SPS", results.sensor), "SPS30", "PMS5003")) %>%
+  dplyr::filter(!grepl("PM25_corr", method)) %>%
+  ggplot(aes(
+    x = as.factor(substr(cutMonth, 1, 7)),
+    y = results.RMSE,
+    colour = method
+  )) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.8,
+    outlier.alpha = 0.5,
+    lwd = 0.2,
+    outlier.shape = NA
+  ) +
+  custom_theme +
+  facet_wrap( ~ sensor_type) +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  ylab(quickText("RMSE (ug/m3)")) +
+  xlab("Start of the month") +
+  #scale_y_continuous(labels=scaleFUN, limits = quantile(res_eu_per_month$results.RMSE, c(0.1, 0.9))) +
+  labs(colour = "Calibration method")
+#p
+
+p_bus_pms <- res_bus_per_month_ft %>%
+  dplyr::filter(results.type == "Full") %>%
+  dplyr::mutate(sensor_type = ifelse(grepl("SPS", results.combination), "SPS30", "PMS5003")) %>%
+  ggplot(aes(
+    x = as.factor(substr(cutMonth, 1, 7)),
+    y = results.usb,
+    colour = method
+  )) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.8,
+    outlier.alpha = 0.5,
+    lwd = 0.2,
+    outlier.shape = NA
+  ) +
+  custom_theme +
+  xlab("Start of the month") +
+  ylab(quickText("Between unit uncertainty (ug/m3)")) +
+  facet_wrap( ~ sensor_type) +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  #scale_y_continuous(labels=scaleFUN, limits = quantile(res_bus_per_month$results.usb, c(0.1, 0.9))) +
+  labs(colour = "Calibration method")
+
+#p_bus_pms
+
+legend <- get_legend(# create some space to the left of the legend
+  p_bus_pms +
+    guides(color = guide_legend(ncol = 1, title = "Calibration method")) +
+    theme(legend.box.margin = margin(0, 0, 0, 0)))
+pg <-
+  plot_grid(
+    p + xlab(NULL) + guides(x = "none") + theme(legend.position = "none"),
+    p_bus_pms + theme(legend.position = "none"),
+    nrow = 2,
+    labels = c("(a)", "(b)"),
+    label_y = 0.1
+  )
+pg_l <- plot_grid(pg,
+                  legend,
+                  ncol = 2,
+                  rel_widths = c(0.8, 0.2))
+
+#ggsave2(plot=pg_l, filename = paste0(output_folder, "2weeks_restoftheyear_permonth.png"),
+# width  = 190, units = "mm")
+pg_l
+
+```
+
+
+# Remaining methods
+
+```{r}
+
+res_eu_per_month_ft <- res_eu_per_month %>%
+  dplyr::filter(!(method %in% method_list_ft))
+
+res_bus_per_month_ft <- res_bus_per_month %>%
+  dplyr::filter(!(method %in% method_list_ft))
+
+
+p <- res_eu_per_month_ft %>%
+  dplyr::filter(results.type == "Full") %>%
+  dplyr::mutate(sensor_type = ifelse(grepl("SPS", results.sensor), "SPS30", "PMS5003")) %>%
+  dplyr::filter(!grepl("PM25_corr", method)) %>%
+  ggplot(aes(
+    x = as.factor(substr(cutMonth, 1, 7)),
+    y = results.RMSE,
+    colour = method
+  )) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.8,
+    outlier.alpha = 0.5,
+    lwd = 0.2,
+    outlier.shape = NA
+  ) +
+  custom_theme +
+  facet_wrap( ~ sensor_type) +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  ylab(quickText("RMSE (ug/m3)")) +
+  xlab("Start of the month") +
+  scale_y_continuous(labels = scaleFUN) +
+  labs(colour = "Calibration method")
+#p
+
+p_bus_pms <- res_bus_per_month_ft %>%
+  dplyr::filter(results.type == "Full") %>%
+  dplyr::mutate(sensor_type = ifelse(grepl("SPS", results.combination), "SPS30", "PMS5003")) %>%
+  ggplot(aes(
+    x = as.factor(substr(cutMonth, 1, 7)),
+    y = results.usb,
+    colour = method
+  )) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.8,
+    outlier.alpha = 0.5,
+    lwd = 0.2,
+    outlier.shape = NA
+  ) +
+  custom_theme +
+  xlab("Start of the month") +
+  ylab(quickText("Between unit uncertainty (ug/m3)")) +
+  facet_wrap( ~ sensor_type) +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  #scale_y_continuous(labels=scaleFUN, limits = quantile(res_bus_per_month$results.usb, c(0.1, 0.9))) +
+  labs(colour = "Calibration method")
+
+#p_bus_pms
+
+legend <- get_legend(# create some space to the left of the legend
+  p_bus_pms +
+    guides(color = guide_legend(ncol = 1, title = "Calibration method")) +
+    theme(legend.box.margin = margin(0, 0, 0, 0)))
+pg <-
+  plot_grid(
+    p + xlab(NULL) + guides(x = "none") + theme(legend.position = "none"),
+    p_bus_pms + theme(legend.position = "none"),
+    nrow = 2,
+    labels = c("(a)", "(b)"),
+    label_y = 0.1
+  )
+pg_l <- plot_grid(pg,
+                  legend,
+                  ncol = 2,
+                  rel_widths = c(0.8, 0.2))
+
+#ggsave2(plot=pg_l, filename = paste0(output_folder, "2weeks_restoftheyear_permonth.png"),
+# width  = 190, units = "mm")
+pg_l
+
+
+```
+
+
+
+
+# Used for paper
+
+
+```{r}
+
+p <- res_eu_per_month %>%
+  dplyr::filter(!(
+    method %in% c(
+      "Koehler_mass",
+      "Koehler_size",
+      "Laulainen",
+      "Koehler_mass+OLS",
+      "Koehler_size+OLS",
+      "Laulainen+OLS"
+    )
+  )) %>%
+  dplyr::filter(results.type == "Full") %>%
+  na.exclude() %>%
+  dplyr::mutate(sensor_type = ifelse(grepl("SPS", results.sensor), "SPS30", "PMS5003")) %>%
+  ggplot(aes(
+    x = as.factor(substr(cutMonth, 1, 7)),
+    y = results.RMSE,
+    colour = method
+  )) +
+  #stat_boxplot(geom ='errorbar') +
+  geom_boxplot(
+    fatten = 1,
+    outlier.size = 0.8,
+    outlier.alpha = 0.5,
+    lwd = 0.5,
+    outlier.shape = NA
+  ) +
+  custom_theme +
+  facet_wrap( ~ sensor_type, nrow = 2) +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  ylab(quickText("RMSE (ug/m3)")) +
+  xlab("Start of the month") +
+  scale_y_continuous(limits = c(1, 13)) +
+  labs(colour = "Calibration method") #+
+# scale_color_brewer(palette="Paired")
+pl <-
+  p + guides(shape = guide_legend(override.aes = list(size = 0.5))) +
+  guides(color = guide_legend(override.aes = list(size = 0.5))) +
+  theme(legend.title = element_text(size = 9),
+        legend.text = element_text(size = 9))
+
+ggsave2(
+  pl,
+  filename = paste0(PLOT_OUTPUT_FOLDER, "2weeks_restoftheyear_permonth.png"),
+  width  = 190,
+  units = "mm"
+)
+
+pl
+```
+
+
+
+
+# Per Week
+
+
+```{r}
+
+
+
+res_bus_per_week <-
+  readRDS(
+    paste0(
+      input_folder,
+      "results_bus_per_week_pms_calibration_2weeks_restofyear.rds"
+    )
+  )
+
+res_eu_per_week <-
+  readRDS(
+    paste0(
+      input_folder,
+      "results_ue_per_week_pms_calibration_2weeks_restofyear.rds"
+    )
+  )
+
+res_bus_per_week_sps <-
+  readRDS(
+    paste0(
+      input_folder,
+      "results_bus_per_week_sps_calibration_2weeks_restofyear.rds"
+    )
+  )
+
+res_eu_per_week_sps <-
+  readRDS(
+    paste0(
+      input_folder,
+      "results_ue_per_week_sps_calibration_2weeks_restofyear.rds"
+    )
+  )
+
+
+
+res_bus_per_week <- res_bus_per_week %>%
+  bind_rows(res_bus_per_week_sps)
+res_eu_per_week <- res_eu_per_week %>%
+  bind_rows(res_eu_per_week_sps)
+
+res_eu_per_week$method <-
+  fct_recode(
+    res_eu_per_week$method,
+    `MLR_part.` =  "PM25_corr_lm_part_number",
+    `MLR_part.+RH` =   "PM25_corr_lm_part_number_rh",
+    `LR` = "PM25_corr_LR",
+    `MLR_RH` = "PM25_corr_MLR1" ,
+    `OLS` =  "PM25_corr_ols",
+    `RLM` = "PM25_corr_RLM",
+    `RLM_part.+RH`  = "PM25_corr_RLM_rh_part",
+    `RLM+RH` =      "PM25_corr_RLM_rh"
+  )
+
+res_bus_per_week$method <-
+  fct_recode(
+    res_bus_per_week$method,
+    `MLR_part.` =  "PM25_corr_lm_part_number",
+    `MLR_part.+RH` =   "PM25_corr_lm_part_number_rh",
+    `LR` = "PM25_corr_LR",
+    `MLR_RH` = "PM25_corr_MLR1" ,
+    `OLS` =  "PM25_corr_ols",
+    `RLM` = "PM25_corr_RLM",
+    `RLM_part.+RH`  = "PM25_corr_RLM_rh_part",
+    `RLM+RH` =      "PM25_corr_RLM_rh"
+  )
+
+
+
+p <- res_eu_per_week %>%
+  dplyr::filter(!grepl("koehler|Laulainen", method)) %>%
+  dplyr::mutate(sensor_type = ifelse(grepl("SPS", results.sensor), "SPS30", "PMS5003")) %>%
+  #group_by(cutDate, method) %>%
+  #summarise(across(where(is.numeric),~mean(.x,na.rm=T))) %>%
+  ggplot(aes(
+    x = as.factor(substr(cutWeek, 1, 10)),
+    y = results.RMSE,
+    colour = method
+  )) +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.8,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  custom_theme +
+  facet_wrap( ~ sensor_type) +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  ylab(quickText("RMSE (ug/m3)")) +
+  xlab("Start of the week") +
+  scale_y_continuous(labels = scaleFUN) +
+  labs(colour = "Calibration method")
+#geom_line(data=results_sum,aes(x=cutDate, y = results.expanded_uncertainty,colour=method))
+p
+ggplotly(p) %>%
+  layout(boxmode = "group")
+
+
+
+
+
+p_bus_pms <- res_bus_per_week %>%
+  dplyr::filter(!grepl("koehler|Laulainen", method)) %>%
+  dplyr::filter(results.type == "Full") %>%
+  dplyr::mutate(sensor_type = ifelse(grepl("SPS", results.combination), "SPS30", "PMS5003")) %>%
+  dplyr::filter(!grepl("80|85", method)) %>%
+  dplyr::filter(!grepl("Koehler_size", method)) %>%
+  ggplot(aes(
+    x = as.factor(substr(cutWeek, 1, 10)),
+    y = results.usb,
+    colour = method
+  )) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.8,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  geom_hline(yintercept = 5, linetype = "dashed") +
+  custom_theme +
+  xlab("Start of the week") +
+  ylab(quickText("Between unit uncertainty (ug/m3)")) +
+  #ggtitle(field)+
+  facet_wrap( ~ sensor_type) +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  scale_y_continuous(labels = scaleFUN) +
+  labs(colour = "Calibration method")
+
+p_bus_pms
+
+legend <- get_legend(# create some space to the left of the legend
+  p_bus_pms +
+    guides(color = guide_legend(ncol = 1, title = "Calibration method")) +
+    #theme(legend.position = "bottom") +
+    theme(legend.box.margin = margin(0, 0, 0, 0)))
+pg <-
+  plot_grid(
+    p + xlab(NULL) + guides(x = "none") + theme(legend.position = "none"),
+    p_bus_pms + theme(legend.position = "none"),
+    nrow = 2,
+    labels = c("(a)", "(b)"),
+    label_y = 0.1
+  )
+pg_l <- plot_grid(pg,
+                  legend,
+                  ncol = 2,
+                  rel_widths = c(0.8, 0.2))
+
+ggsave2(
+  plot = pg_l,
+  filename = paste0(PLOT_OUTPUT_FOLDER, "2weeks_restoftheyear.png"),
+  width  = 190,
+  units = "mm"
+)
+
+pg_l
+```
+
+
+

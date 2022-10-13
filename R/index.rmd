@@ -257,6 +257,10 @@ the year](calibration_2weeks_restoftheyear.html)
 
 # Robust method selection
 
+In this part, the calibration methods are evaluated on each subsets of 2 weeks +
+40 consecutive days possible during the study. The results are presented in
+[Calibration 2 weeks 40 days](calibration_2weeks_40days.html).
+
 # Calibration scenarios comparison
 
 ## 2w 8w

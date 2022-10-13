@@ -34,7 +34,7 @@ Results are calculated in a separate script,
 They are stored in `output/demo_equivalence_avg.r`
 
 ```{r setup, message=F}
-
+require(stringr)
 
 source("utilities/utilities.R")
 source("utilities/nested_models.r")
@@ -582,7 +582,7 @@ p_pms <- res_bind_ue %>%
                outlier.alpha = 0.5) +
   ylab(quickText("RMSE (ug/m3)")) +
   custom_theme +
-  facet_wrap( ~ sensor_type, scales = "free") +
+  facet_wrap(~ sensor_type, scales = "free") +
   theme(axis.text.x = element_text(
     angle = 45,
     vjust = 1,
@@ -609,7 +609,7 @@ p_sps <- res_bind_ue %>%
                outlier.alpha = 0.5) +
   ylab(quickText("RMSE (ug/m3)")) +
   custom_theme +
-  facet_wrap( ~ sensor_type, scales = "free") +
+  facet_wrap(~ sensor_type, scales = "free") +
   theme(axis.text.x = element_text(
     angle = 45,
     vjust = 1,

@@ -48,8 +48,8 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
-# Plots folder
-output/plots/
+# Output folder
+output/
 
 # Data folder
 /data/

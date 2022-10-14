@@ -1,0 +1,744 @@
+---
+title: "Calibration scenarios comparison"
+author: "FMJ Bulot"
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+knit: (function(inputFile, encoding) { 
+      out_dir <- '../../docs/';
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_file=file.path(dirname(inputFile), out_dir, 'calibration_scenarios_comparison.html'))})
+output:
+  html_document:
+    df_print: paged
+    code_folding: hide
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+editor_options: 
+  markdown: 
+    wrap: 80
+---
+
+This notebook explores the results from the scripts in the folder
+`calibration_scenarios_Xweeks_Xmonths`. Note that these scripts require a lot
+of computational time and a lost of space to store the results of the 
+different calibration (about 174Gb).
+For each calibration scenario, the script has been divided into several files 
+so they can be ran in parallel (for instance
+using background jobs, launched from the root directory) to speed up the 
+calculations.
+
+These represents the different calibration scenarios presented in the paper: - 1
+week of pre-deployment calibration, 2 months of evaluation, 1 week of
+post-deployment calibration - 2 weeks of pre-deployment calibration, 2 months of
+evaluation, 2 weeks of post-deployment calibration - 2 weeks of pre-deployment
+calibration, 4 months of evaluation, 2 weeks of post-deployment calibration - 2
+weeks of pre-deployment calibration, 6 months of evaluation, 2 weeks of
+post-deployment calibration - 1 week of pre-deployment calibration, 2 months of
+evaluation - 2 weeks of pre-deployment calibration, 2 months of evaluation - 4
+weeks of pre-deployment calibration, 2 months of evaluation
+
+```{r}
+
+source("utilities/utilities.R")
+source("utilities/nested_models.r")
+source("utilities/variables.r")
+
+require(tidytext)
+```
+
+```{r}
+
+input_folder <-
+  paste0(here::here(),
+         "/output/calibration/scenarios/calibration_scenarios_comparison/")
+
+res <-
+  readRDS(paste0(input_folder, "res_calibration_scenario_comparison.rds"))
+res_bus <-
+  readRDS(paste0(input_folder, "res_bus_calibration_scenario_comparison.rds"))
+
+```
+
+```{r}
+
+
+
+res$method <-
+  fct_recode(
+    res$method,
+    `Koehler_mass+LR` = "koehlermasslr",
+    `Koehler_mass+OLS` = "koehlermassols",
+    `Koehler_size+LR` = "koehlersizelr",
+    `Koehler_size+OLS` =  "koehlersizeols",
+    `Laulainen+LR` = "laulainenlr",
+    `Laulainen+OLS` = "laulainenols",
+    `MLR_part.` =  "lmpart",
+    `MLR_part.+RH` =   "lmpartrh",
+    `LR` = "lr",
+    `MLR_RH` = "mlr1" ,
+    `OLS` =  "ols",
+    `RLM` = "rlmhuber",
+    `RLM_part.+RH`  = "rlmpartrh",
+    `RLM+RH` =      "rlmrh",
+    `RLM_part.` = "rlmpart"
+  )
+res$method <-
+  fct_relevel(
+    res$method,
+    "Initial",
+    "OLS",
+    "LR",
+    "MLR_RH",
+    "MLR_part.",
+    "MLR_part.+RH",
+    "RLM",
+    "RLM+RH",
+    "RLM_part.",
+    "RLM_part.+RH",
+    "Koehler_mass+LR",
+    "Koehler_mass+OLS",
+    "Koehler_size+LR",
+    "Koehler_size+OLS",
+    "Laulainen+LR",
+    "Laulainen+OLS"
+  )
+
+res_bus$method <-
+  fct_recode(
+    res_bus$method,
+    `Koehler_mass+LR` = "koehlermasslr",
+    `Koehler_mass+OLS` = "koehlermassols",
+    `Koehler_size+LR` = "koehlersizelr",
+    `Koehler_size+OLS` =  "koehlersizeols",
+    `Laulainen+LR` = "laulainenlr",
+    `Laulainen+OLS` = "laulainenols",
+    `MLR_part.` =  "lmpart",
+    `MLR_part.+RH` =   "lmpartrh",
+    `LR` = "lr",
+    `MLR_RH` = "mlr1" ,
+    `OLS` =  "ols",
+    `RLM` = "rlmhuber",
+    `RLM_part.+RH`  = "rlmpartrh",
+    `RLM+RH` =      "rlmrh",
+    `RLM_part.` = "rlmpart"
+  )
+res_bus$method <-
+  fct_relevel(
+    res_bus$method,
+    "Initial",
+    "OLS",
+    "LR",
+    "MLR_RH",
+    "MLR_part.",
+    "MLR_part.+RH",
+    "RLM",
+    "RLM+RH",
+    "RLM_part.",
+    "RLM_part.+RH",
+    "Koehler_mass+LR",
+    "Koehler_mass+OLS",
+    "Koehler_size+LR",
+    "Koehler_size+OLS",
+    "Laulainen+LR",
+    "Laulainen+OLS"
+  )
+
+res$scenario_type <-
+  fct_recode(
+    res$scenario_type,
+    `1w8w1w` = "1w2m1w",
+    `2w8w` = "2w",
+    `2w8w2w` = "2w2m2w",
+    `4w8w` =  "4w",
+    `2w16w2w` = "2w4m2w"
+  )
+
+res$scenario_type <-
+  fct_relevel(res$scenario_type,
+              "2w8w",
+              "4w8w",
+              "1w8w1w",
+              "2w8w2w",
+              "2w16w2w",
+              "2w24w2w")
+
+res_bus$scenario_type <-
+  fct_recode(
+    res_bus$scenario_type,
+    `1w8w1w` = "1w2m1w",
+    `2w8w` = "2w",
+    `2w8w2w` = "2w2m2w",
+    `4w8w` =  "4w" ,
+    `2w16w2w` = "2w4m2w"
+  )
+
+res_bus$scenario_type <-
+  fct_relevel(res_bus$scenario_type,
+              "2w8w",
+              "4w8w",
+              "1w8w1w",
+              "2w8w2w",
+              "2w16w2w",
+              "2w24w2w")
+
+res <- res[!grepl("N2", res$sensor),]
+res_bus <- res_bus[!grepl("N2", res_bus$combination),]
+
+```
+
+# Filter out techniques discarded by robust selection
+
+```{r}
+
+
+res <-
+  res[!(
+    res$method %in% c(
+      "Koehler_mass+LR",
+      "Koehler_mass+OLS",
+      "Koehler_size+LR",
+      "Koehler_size+OLS",
+      "Laulainen+LR",
+      "Laulainen+OLS",
+      "koehlermass",
+      "koehlersize",
+      "laulainen"
+    )
+  ),] %>%
+  dplyr::mutate(sensor_type = ifelse(grepl("SPS", sensor), "SPS30", "PMS5003"))
+
+res_bus <-
+  res_bus[!(
+    res_bus$method %in% c(
+      "Koehler_mass+LR",
+      "Koehler_mass+OLS",
+      "Koehler_size+LR",
+      "Koehler_size+OLS",
+      "Laulainen+LR",
+      "Laulainen+OLS",
+      "koehlermass",
+      "koehlersize",
+      "laulainen"
+    )
+  ),] %>%
+  dplyr::mutate(sensor_type = ifelse(grepl("SPS", combination), "SPS30", "PMS5003")) 
+
+```
+
+# Results
+
+## RMSE and Between Unit Uncertainty
+
+```{r}
+
+
+p_rmse <- res %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(dataset_type == "cal") %>%
+  ggplot(aes(x = method, y = RMSE, colour = scenario_type)) +
+  stat_boxplot(geom = "errorbar") +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.3,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  facet_wrap( ~ sensor_type, ncol = 2, scales = "free_y") +
+  xlab("Calibration method") +
+  ylab(quickText("RMSE (ug/m3)")) +
+  ylim(c(0, quantile(res$RMSE, probs = 0.9)))
+#p_rmse
+
+
+
+
+p_bus <- res_bus %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(dataset_type == "cal") %>%
+  ggplot(aes(
+    x = method,
+    y = usb,
+    colour = scenario_type
+  )) +
+  stat_boxplot(geom = "errorbar") +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.3,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  #geom_line(data = table_res, aes(x=method,y=mean_RMSE, colour=sensor))+
+  # ggtitle("Calibration - PMS - Scenarios comparison") +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  facet_wrap( ~ sensor_type, ncol = 2, scales = "free_y") +
+  xlab("Calibration method") +
+  ylab(quickText("Between unit uncertainty (ug/m3)"))
+#p_bus
+
+
+legend <- get_legend(# create some space to the left of the legend
+  p_rmse +
+    guides(color = guide_legend(ncol = 1, title = "Sensors")) +
+    #theme(legend.position = "bottom") +
+    theme(legend.box.margin = margin(0, 0, 0, 0)))
+
+pg <-
+  plot_grid(
+    p_rmse + xlab(NULL) + guides(x = "none") + theme(legend.position = "none"),
+    p_bus + theme(legend.position = "none"),
+    nrow = 2,
+    labels = c("(a)", "(b)"),
+    label_y = c(0.1, 0.1)
+  )
+
+
+
+
+
+pg_l <- plot_grid(pg,
+                  legend,
+                  ncol = 2,
+                  rel_widths  = c(0.8, 0.2))
+pg_l
+#ggsave2(plot = pg_l,filename=paste0(output_plot_folder, "comparison_scenarios.svg"),
+#    height = 140, units = "mm")
+
+
+```
+
+## On RLM_part.+RH only
+
+In this section we only focus on the four methods that performed both during the 
+robust method selection ((presented in in [Calibration 2 weeks 40
+days](calibration_2weeks_40days.html)), with a special focus on RLM_part.+RH for
+clarity in the graph.
+
+
+```{r}
+
+
+p_rmse <- res %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(dataset_type == "cal") %>%
+  dplyr::filter(method %in% c("RLM_part.+RH", "RLM_part.", "MLR_part.", "MLR_part.+RH")) %>%
+  ggplot(aes(
+    x = reorder_within(scenario_type, RMSE, sensor_type, median),
+    y = RMSE,
+    colour = method
+  )) +
+  stat_boxplot(geom = "errorbar") +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.3,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  #geom_line(data = table_res, aes(x=method,y=mean_RMSE, colour=sensor))+
+  # ggtitle("Calibration - PMS - Scenarios comparison") +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  facet_wrap( ~ sensor_type, ncol = 2, scales = "free") +
+  xlab("Calibration method") +
+  ylab(quickText("RMSE (ug/m3)")) +
+  ylim(c(0, quantile(res$RMSE, probs = 0.9)))
+p_rmse
+
+p_rmse <- res %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(dataset_type == "cal") %>%
+  dplyr::filter(method %in% c("RLM_part.+RH", "RLM_part.", "MLR_part.", "MLR_part.+RH")) %>%
+  ggplot(aes(
+    x = reorder_within(method, RMSE, sensor_type, median),
+    y = RMSE,
+    colour = scenario_type
+  )) +
+  stat_boxplot(geom = "errorbar") +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.3,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  #geom_line(data = table_res, aes(x=method,y=mean_RMSE, colour=sensor))+
+  # ggtitle("Calibration - PMS - Scenarios comparison") +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  facet_wrap( ~ sensor_type, ncol = 2, scales = "free") +
+  xlab("Calibration method") +
+  ylab(quickText("RMSE (ug/m3)")) +
+  ylim(c(0, quantile(res$RMSE, probs = 0.9)))
+p_rmse
+
+
+
+
+
+```
+
+```{r}
+
+
+median_IQR <- function(x) {
+  data.frame(y = quantile(x)[4],
+             label = round2(quantile(x)[4] - quantile(x)[2], n = 1))
+}
+
+
+p_rmse <- res %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(dataset_type == "cal") %>%
+  dplyr::filter(method %in% c("RLM_part.+RH")) %>%
+  ggplot(aes(x = sensor, y = RMSE, colour = scenario_type)) +
+  stat_boxplot(geom = "errorbar") +
+  geom_boxplot(
+    fatten = 1,
+    outlier.size = 0.3,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  #geom_line(data = table_res, aes(x=method,y=mean_RMSE, colour=sensor))+
+  # ggtitle("Calibration - PMS - Scenarios comparison") +
+  custom_theme +
+  # theme(axis.text.x = element_text(angle = 90, hjust=0.95,vjust=0.2)) +
+  facet_wrap( ~ sensor_type, nrow = 2, scales = "free") +
+  xlab("Sensors") +
+  ylab(quickText("RMSE (ug/m3)")) +
+  #ylim(c(0,quantile(res$RMSE,probs = 0.9))) +
+  stat_summary(
+    geom = "text",
+    fun.data = median_IQR,
+    aes(group = scenario_type),
+    size = 2,
+    position = position_dodge(width = 0.75),
+    vjust = -0.5,
+    colour = "black"
+  ) +
+  theme(legend.position = "bottom") + guides(colour = guide_legend(nrow = 1)) +
+  scale_y_continuous(limits = c(0, quantile(res$RMSE, probs = 0.9)),
+                     minor_breaks = seq(0, 10, 0.2)) +
+  labs(colour = "Scenarios")
+p_rmse
+ggsave2(
+  plot = p_rmse,
+  filename = paste0(
+    PLOT_OUTPUT_FOLDER,
+    "comparison_scenarios_rmse_RLMparRH.png"
+  ),
+  height = 200,
+  units = "mm"
+)
+```
+
+### Between unit uncertainty
+
+```{r}
+
+
+duplicated_cbn <-
+  c(
+    "PMS-63N3 - PMS-86N2",
+    "PMS-65N4 - PMS-86N2",
+    "PMS-75N3 - PMS-86N2",
+    "PMS-91N4 - PMS-86N2",
+    "SPS-19N4 - SPS-38N2",
+    "SPS-21N4 - SPS-38N2",
+    "SPS-36N3 - SPS-38N2",
+    "SPS-41N3 - SPS-38N2"
+  )
+
+p_bus <- res_bus %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(dataset_type == "cal") %>%
+  dplyr::filter(method %in% c("RLM_part.+RH")) %>%
+  dplyr::filter(!(combination %in% duplicated_cbn)) %>%
+  ggplot(aes(
+    x = str_remove_all(combination, "SPS-|PMS-") ,
+    y = usb,
+    colour = scenario_type
+  )) +
+  stat_boxplot(geom = "errorbar") +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.3,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  #geom_line(data = table_res, aes(x=method,y=mean_RMSE, colour=sensor))+
+  # ggtitle("Calibration - PMS - Scenarios comparison") +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  facet_wrap( ~ sensor_type, nrow = 2, scales = "free") +
+  xlab("Calibration method") +
+  ylab(quickText("Between unit uncertainty (ug/m3)")) +
+  stat_summary(
+    geom = "text",
+    fun =  ~ quantile(.x, probs = c(1, 2, 3) / 4),
+    aes(group = scenario_type, label = sprintf("%1.1f", ..y..)),
+    size = 2,
+    position = position_dodge(width = 0.75),
+    vjust = -0.5,
+    colour = "black"
+  ) +
+  theme(legend.position = "bottom") + guides(colour = guide_legend(nrow = 1))
+p_bus
+
+
+p_bus <- res_bus %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(dataset_type == "cal") %>%
+  dplyr::filter(method %in% c("RLM_part.+RH")) %>%
+  ggplot(aes(x = scenario_type , y = usb, colour = scenario_type)) +
+  stat_boxplot(geom = "errorbar") +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.3,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  #geom_line(data = table_res, aes(x=method,y=mean_RMSE, colour=sensor))+
+  # ggtitle("Calibration - PMS - Scenarios comparison") +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  facet_wrap( ~ sensor_type, nrow = 2, scales = "free") +
+  xlab("Calibration method") +
+  ylab(quickText("Between unit uncertainty (ug/m3)")) +
+  stat_summary(
+    geom = "text",
+    fun =  ~ quantile(.x, probs = c(1, 2, 3) / 4),
+    aes(group = scenario_type, label = sprintf("%1.1f", ..y..)),
+    size = 2,
+    position = position_dodge(width = 0.75),
+    vjust = -0.5,
+    colour = "black"
+  )
+p_bus
+
+
+```
+
+## Other metrics
+
+```{r}
+
+
+
+p_bias <- res %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(dataset_type == "cal") %>%
+  ggplot(aes(x = method, y = y__, colour = scenario_type)) +
+  stat_boxplot(geom = "errorbar") +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.3,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  #geom_line(data = table_res, aes(x=method,y=mean_RMSE, colour=sensor))+
+  # ggtitle("Calibration - PMS - Scenarios comparison") +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  facet_wrap( ~ sensor_type, ncol = 2, scales = "free_y") +
+  xlab("Calibration method") +
+  ylab(quickText("Bias (ug/m3)")) +
+  ylim(c(0, quantile(res$y__, probs = 0.9)))
+p_bias
+
+
+p_U <- res %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(dataset_type == "cal") %>%
+  ggplot(aes(x = method, y = U, colour = scenario_type)) +
+  stat_boxplot(geom = "errorbar") +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.3,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  #geom_line(data = table_res, aes(x=method,y=mean_RMSE, colour=sensor))+
+  # ggtitle("Calibration - PMS - Scenarios comparison") +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  facet_wrap( ~ sensor_type, ncol = 2, scales = "free_y") +
+  xlab("Calibration method") +
+  ylab(quickText("Uncertainty USEPA (%)")) +
+  ylim(c(0, quantile(res$U, probs = 0.9)))
+p_U
+
+
+p_cv <- res %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(dataset_type == "cal") %>%
+  ggplot(aes(x = method, y = cv, colour = scenario_type)) +
+  stat_boxplot(geom = "errorbar") +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.3,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  #geom_line(data = table_res, aes(x=method,y=mean_RMSE, colour=sensor))+
+  # ggtitle("Calibration - PMS - Scenarios comparison") +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  facet_wrap( ~ sensor_type, ncol = 2, scales = "free_y") +
+  xlab("Calibration method") +
+  ylab(quickText("CV (%)")) +
+  ylim(c(0, quantile(res$cv, probs = 0.9)))
+p_cv
+
+p_ue <- res %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(dataset_type == "cal") %>%
+  ggplot(aes(x = method, y = expanded_uncertainty, colour = scenario_type)) +
+  stat_boxplot(geom = "errorbar") +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.3,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  #geom_line(data = table_res, aes(x=method,y=mean_RMSE, colour=sensor))+
+  # ggtitle("Calibration - PMS - Scenarios comparison") +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  facet_wrap( ~ sensor_type, ncol = 2, scales = "free_y") +
+  xlab("Calibration method") +
+  ylab(quickText("Expanded uncertainty (%)")) +
+  ylim(c(0, quantile(
+    res$expanded_uncertainty, probs = 0.9, na.rm = T
+  )))
+p_ue
+
+p_r2 <- res %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(dataset_type == "cal") %>%
+  ggplot(aes(x = method, y = r2, colour = scenario_type)) +
+  stat_boxplot(geom = "errorbar") +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.3,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  #geom_line(data = table_res, aes(x=method,y=mean_RMSE, colour=sensor))+
+  # ggtitle("Calibration - PMS - Scenarios comparison") +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  facet_wrap( ~ sensor_type, ncol = 2, scales = "free_y") +
+  xlab("Calibration method") +
+  ylab(quickText("r2")) +
+  ylim(c(0, quantile(
+    res$r2, probs = 0.9, na.rm = T
+  )))
+p_r2
+
+
+
+```
+
+
+# Results in tables
+
+```{r}
+
+
+table_res <- res %>%
+  dplyr::filter(grepl("PMS", sensor)) %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(dataset_type == "cal") %>%
+  group_by(scenario_type, sensor, method) %>%
+  summarise(
+    mean_RMSE = mean(RMSE, na.rm = T),
+    quant25 = quantile(RMSE, probs = c(0.25), na.rm = T),
+    quant75 = quantile(RMSE, probs = c(0.75), na.rm = T),
+    median = median(RMSE, na.rm = T)
+  ) %>%
+  arrange(desc(mean_RMSE)) #%>%
+
+table_res
+table_res %>%
+  write.csv(paste0(PLOT_OUTPUT_FOLDER, "table_res_pms.csv"), sep = "\tab")
+
+res %>%
+  dplyr::filter(grepl("PMS", sensor)) %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(dataset_type == "cal") %>%
+  group_by(scenario_type, sensor, method) %>%
+  rstatix::get_summary_stats()
+
+res_sensor_type <-  res %>%
+  dplyr::filter(grepl("PMS", sensor)) %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(dataset_type == "cal") %>%
+  group_by(scenario_type, method, sensor_type) %>%
+  rstatix::get_summary_stats()
+
+
+table_res_sps <- res %>%
+  dplyr::filter(grepl("SPS", sensor)) %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(dataset_type == "cal") %>%
+  group_by(scenario_type, sensor, method) %>%
+  summarise(
+    mean_RMSE = mean(RMSE, na.rm = T),
+    quant25 = quantile(RMSE, probs = c(0.25), na.rm = T),
+    quant75 = quantile(RMSE, probs = c(0.75), na.rm = T),
+    median = median(RMSE, na.rm = T)
+  ) %>%
+  arrange(desc(mean_RMSE))
+table_res_sps
+table_res_sps %>%
+  write.csv(paste0(PLOT_OUTPUT_FOLDER, "table_res_sps.csv"), sep = "\tab")
+
+
+```

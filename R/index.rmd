@@ -34,7 +34,7 @@ require(dplyr)
 
 This folder contains the scripts used to conduct the analysis of the data
 collected at NOCS Southampton, with a Fidas 200S and 40 PM sensors between July
-2020 and July 2021.
+2020 and July 2021 presented in the paper XXXXXXXX.
 
 # Data preparation
 
@@ -89,11 +89,21 @@ The following points have been investigated:
 
 -   initial data exploration presented in this notebook.
 
--   impact of the time averaging, presented in XXXXXXXXXX
+-   impact of the time averaging on the performances of the sensors and on the
+    demonstration of equivalence, presented in [Demonstration of equivalence for
+    daily, hourly and 2min averages](demo_equivalence_avg.html)
 
--   performances of calibration methods, presented in XXXXXXXXXX
+-   a preliminary analysis of the performances of different calibration methods
+    presented in [Test calibration](test_calibration.html)
 
--   performances of calibration scenarios (lenght and duration of the
+-   the evolution of the performances of the calibration methods through the
+    study, presented in [Calibration on 2 first weeks, performances on the
+    year](calibration_2weeks_restoftheyear.html)
+
+-    a robust selection of the calibration methods presented in [Calibration 2
+    weeks 40 days](calibration_2weeks_40days.html).
+
+-   performances of calibration scenarios (length and duration of the
     calibration), presented in XXXXXXXXXX
 
 # Initial data exploration
@@ -263,6 +273,11 @@ In this part, the calibration methods are evaluated on each subsets of 2 weeks +
 
 # Calibration scenarios comparison
 
+The different scenario (lenght and frequency of the calibration) are evaluated
+on all the possible subsets of these scenarios in the dataset. The results are
+presented in [Calibration scenarios
+comparison](calibration_scenarios_comparison.html).
+
 ## 2w 8w
 
 ## 1w 8w 1w
@@ -275,4 +290,5 @@ In this part, the calibration methods are evaluated on each subsets of 2 weeks +
 
 # References
 
-<div id="refs"></div>
+::: {#refs}
+:::

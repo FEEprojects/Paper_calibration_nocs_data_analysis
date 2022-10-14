@@ -278,15 +278,9 @@ on all the possible subsets of these scenarios in the dataset. The results are
 presented in [Calibration scenarios
 comparison](calibration_scenarios_comparison.html).
 
-## 2w 8w
-
-## 1w 8w 1w
-
-## 2w 8w 2w
-
-## 4w 8w
-
-## 2w16w2w
+The calibration scenarios are then used to compare to the criteria of the
+demonstration of equivalence, presented in [Calibration scenarios comparison
+equivalence](calibration_scenarios_comparison_equivalence).
 
 # References
 

@@ -1,0 +1,983 @@
+---
+title: "Calibration scenarios comparison"
+author: "FMJ Bulot"
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+knit: (function(inputFile, encoding) { 
+      out_dir <- '../docs/';
+      rmarkdown::render(inputFile,
+                        encoding=encoding, 
+                        output_file=file.path(dirname(inputFile), out_dir, 'calibration_scenarios_comparison_equivalence.html'))})
+output:
+  html_document:
+    df_print: paged
+    code_folding: hide
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+---
+
+
+This notebook presents the results from the scripts in the folder 
+`calibration_Xweeks_Xmonths_equivalence`
+
+```{r}
+
+source("utilities/utilities.R")
+source("utilities/nested_models.r")
+source("utilities/variables.r")
+
+input_folder <- paste0(here::here(), "/output/calibration/scenarios/demo_equivalence/")
+
+```
+
+# Data preparation
+
+```{r}
+res_cal_sps <-
+  readRDS(file = paste0(input_folder, "res_cal_sps_2w8w2w.rds"))
+res_cal_pms <-
+  readRDS(file = paste0(input_folder, "res_cal_pms_2w8w2w.rds"))
+
+res_cal_sps$scenario_type <- "2w8w2w"
+res_cal_pms$scenario_type <- "2w8w2w"
+
+res <- res_cal_sps %>%
+  bind_rows(res_cal_pms)
+
+
+
+res <- res %>%
+  bind_rows(res_cal_sps) %>%
+  bind_rows(res_cal_pms)
+
+res_cal_sps <-
+  readRDS(file = paste0(input_folder, "res_cal_sps_2w8w.rds"))
+res_cal_pms <-
+  readRDS(file = paste0(input_folder, "res_cal_pms_2w8w.rds"))
+
+
+res_cal_sps$scenario_type <- "2w8w"
+res_cal_pms$scenario_type <- "2w8w"
+
+res <- res %>%
+  bind_rows(res_cal_sps) %>%
+  bind_rows(res_cal_pms)
+
+res_cal_sps <-
+  readRDS(file = paste0(input_folder, "res_cal_sps_4w8w.rds"))
+res_cal_pms <-
+  readRDS(file = paste0(input_folder, "res_cal_pms_4w8w.rds"))
+
+
+res_cal_sps$scenario_type <- "4w8w"
+res_cal_pms$scenario_type <- "4w8w"
+
+res <- res %>%
+  bind_rows(res_cal_sps) %>%
+  bind_rows(res_cal_pms)
+
+
+res_cal_sps <-
+  readRDS(file = paste0(input_folder, "res_cal_sps_1w8w1w.rds"))
+res_cal_pms <-
+  readRDS(file = paste0(input_folder, "res_cal_pms_1w8w1w.rds"))
+
+res_cal_sps$scenario_type <- "1w8w1w"
+res_cal_pms$scenario_type <- "1w8w1w"
+
+res <- res %>%
+  bind_rows(res_cal_sps) %>%
+  bind_rows(res_cal_pms)
+
+
+res_cal_sps <-
+  readRDS(file = paste0(input_folder, "res_cal_sps_2w16w2w.rds"))
+res_cal_pms <-
+  readRDS(file = paste0(input_folder, "res_cal_pms_2w16w2w.rds"))
+
+
+res_cal_sps$scenario_type <- "2w16w2w"
+res_cal_pms$scenario_type <- "2w16w2w"
+
+
+res <- res %>%
+  bind_rows(res_cal_sps) %>%
+  bind_rows(res_cal_pms)
+
+res_cal_sps <-
+  readRDS(file = paste0(input_folder, "res_cal_sps_2w24w2w.rds"))
+res_cal_pms <-
+  readRDS(file = paste0(input_folder, "res_cal_pms_2w24w2w.rds"))
+
+
+res_cal_sps$scenario_type <- "2w24w2w"
+res_cal_pms$scenario_type <- "2w24w2w"
+
+
+res <- res %>%
+  bind_rows(res_cal_sps) %>%
+  bind_rows(res_cal_pms)
+
+res_bus_cal_sps <-
+  readRDS(file = paste0(input_folder, "res_bus_cal_sps_2w8w2w.rds"))
+res_bus_cal_pms <-
+  readRDS(file = paste0(input_folder, "res_bus_cal_pms_2w8w2w.rds"))
+
+res_bus_cal_sps$scenario_type <- "2w8w2w"
+res_bus_cal_pms$scenario_type <- "2w8w2w"
+
+res_bus <- res_bus_cal_sps %>%
+  bind_rows(res_bus_cal_pms)
+
+res_bus_cal_sps <-
+  readRDS(file = paste0(input_folder, "res_bus_cal_sps_1w8w1w.rds"))
+res_bus_cal_pms <-
+  readRDS(file = paste0(input_folder, "res_bus_cal_pms_1w8w1w.rds"))
+
+
+res_bus_cal_sps$scenario_type <- "1w8w1w"
+res_bus_cal_pms$scenario_type <- "1w8w1w"
+
+res_bus <- res_bus %>%
+  bind_rows(res_bus_cal_sps) %>%
+  bind_rows(res_bus_cal_pms)
+
+res_bus_cal_sps <-
+  readRDS(file = paste0(input_folder, "res_bus_cal_sps_2w8w.rds"))
+res_bus_cal_pms <-
+  readRDS(file = paste0(input_folder, "res_bus_cal_pms_2w8w.rds"))
+
+
+res_bus_cal_sps$scenario_type <- "2w8w"
+res_bus_cal_pms$scenario_type <- "2w8w"
+
+res_bus <- res_bus %>%
+  bind_rows(res_bus_cal_sps) %>%
+  bind_rows(res_bus_cal_pms)
+
+res_bus_cal_sps <-
+  readRDS(file = paste0(input_folder, "res_bus_cal_sps_4w8w.rds"))
+res_bus_cal_pms <-
+  readRDS(file = paste0(input_folder, "res_bus_cal_pms_4w8w.rds"))
+
+
+res_bus_cal_sps$scenario_type <- "4w8w"
+res_bus_cal_pms$scenario_type <- "4w8w"
+
+res_bus <- res_bus %>%
+  bind_rows(res_bus_cal_sps) %>%
+  bind_rows(res_bus_cal_pms)
+
+res_bus_cal_sps <-
+  readRDS(file = paste0(input_folder, "res_bus_cal_sps_2w16w2w.rds"))
+res_bus_cal_pms <-
+  readRDS(file = paste0(input_folder, "res_bus_cal_pms_2w16w2w.rds"))
+
+
+res_bus_cal_sps$scenario_type <- "2w16w2w"
+res_bus_cal_pms$scenario_type <- "2w16w2w"
+
+res_bus <- res_bus %>%
+  bind_rows(res_bus_cal_sps) %>%
+  bind_rows(res_bus_cal_pms)
+
+res_bus_cal_sps <-
+  readRDS(file = paste0(input_folder, "res_bus_cal_sps_2w24w2w.rds"))
+res_bus_cal_pms <-
+  readRDS(file = paste0(input_folder, "res_bus_cal_pms_2w24w2w.rds"))
+
+
+res_bus_cal_sps$scenario_type <- "2w24w2w"
+res_bus_cal_pms$scenario_type <- "2w24w2w"
+
+res_bus <- res_bus %>%
+  bind_rows(res_bus_cal_sps) %>%
+  bind_rows(res_bus_cal_pms)
+
+res <- res %>%
+  mutate(method = str_split(method, " ", simplify = T)[, 1])
+
+res_bus <- res_bus %>%
+  mutate(method = str_split(method, " ", simplify = T)[, 1])
+
+  
+```
+
+
+
+
+```{r}
+res_1d <-
+  readRDS(
+    "../output/demo_equivalence_avg/res_1day_dates.rds"
+  )
+res_1d_eu <- lapply(res_1d, function(x)
+  bind_rows(x$res)) %>%
+  bind_rows
+res_1d_eu$cal_method <- "Initial"
+res_1d_eu$scenario_type <- "1w8w1w"
+res_1d_eu$start_date <- NA
+res_1d_eu$sensor_site <- res_1d_eu$sensor
+
+res <- res %>% bind_rows(res_1d_eu)
+res_1d_eu$scenario_type <- "2w8w2w"
+res <- res %>% bind_rows(res_1d_eu)
+res_1d_eu$scenario_type <- "2w8w"
+res <- res %>% bind_rows(res_1d_eu)
+res_1d_eu$scenario_type <- "4w8w"
+res <- res %>% bind_rows(res_1d_eu)
+res_1d_eu$scenario_type <- "2w16w2w"
+res <- res %>% bind_rows(res_1d_eu)
+res_1d_eu$scenario_type <- "2w24w2w"
+res <- res %>% bind_rows(res_1d_eu)
+
+
+res <- res[!grepl("N2", res$sensor),] %>%
+  dplyr::mutate(sensor_type = ifelse(grepl("SPS", sensor), "SPS30", "PMS5003"))
+res_bus <- res_bus[!grepl("N2", res_bus$combination),] %>%
+  dplyr::mutate(sensor_type = ifelse(grepl("SPS", combination), "SPS30", "PMS5003"))
+
+```
+
+
+
+```{r}
+res$cal_method <-
+  fct_recode(
+    res$cal_method,
+    `Koehler_mass+LR` = "PM25_corr_koehler_mass_LR",
+    `Koehler_mass+OLS` = "PM25_corr_koehler_mass_ols",
+    `Koehler_size+LR` = "PM25_corr_koehler_size_LR",
+    `Koehler_size+OLS` =  "PM25_corr_koehler_size_ols",
+    `Laulainen+LR` = "PM25_corr_Laulainen_rh_LR",
+    `Laulainen+OLS` = "PM25_corr_Laulainen_rh_ols",
+    `MLR_part.` =  "PM25_corr_lm_part_number",
+    `MLR_part.+RH` =   "PM25_corr_lm_part_number_rh",
+    `LR` = "PM25_corr_LR",
+    `MLR_RH` = "PM25_corr_MLR1" ,
+    `OLS` =  "PM25_corr_ols",
+    `RLM` = "PM25_corr_RLM",
+    `RLM_part.+RH`  = "PM25_corr_RLM_rh_part",
+    `RLM+RH` =      "PM25_corr_RLM_rh",
+    `Laulainen` = "PM25_corr_Laulainen_rh",
+    `Koehler_mass` = "PM25_corr_koehler_mass",
+    `Koehler_size` = "PM25_corr_koehler_size",
+    `RLM_part.` = "PM25_corr_RLM_part"
+  )
+
+
+res$cal_method <-
+  fct_relevel(
+    res$cal_method,
+    "Initial",
+    "OLS",
+    "LR",
+    "MLR_RH",
+    "MLR_part.",
+    "MLR_part.+RH",
+    "RLM",
+    "RLM+RH",
+    "RLM_part.",
+    "RLM_part.+RH",
+    "Koehler_mass+LR",
+    "Koehler_mass+OLS",
+    "Koehler_size+LR",
+    "Koehler_size+OLS",
+    "Laulainen+LR",
+    "Laulainen+OLS"
+  )
+
+res$scenario_type <-
+  fct_relevel(res$scenario_type,
+              "2w8w",
+              "4w8w",
+              "1w8w1w",
+              "2w8w2w",
+              "2w16w2w",
+              "2w24w2w")
+
+
+res_bus$cal_method <-
+  fct_recode(
+    res_bus$cal_method,
+    `Koehler_mass+LR` = "koehlermasslr",
+    `Koehler_mass+OLS` = "koehlermassols",
+    `Koehler_size+LR` = "koehlersizelr",
+    `Koehler_size+OLS` =  "koehlersizeols",
+    `Laulainen+LR` = "PM25_corr_Laulainen_rh_LR",
+    `Laulainen+OLS` = "laulainenols",
+    `MLR_part.` =  "PM25_corr_lm_part_number",
+    `MLR_part.+RH` =   "PM25_corr_lm_part_number_rh",
+    `LR` = "PM25_corr_LR",
+    `MLR_RH` = "PM25_corr_MLR1" ,
+    `OLS` =  "PM25_corr_ols",
+    `RLM` = "PM25_corr_RLM",
+    `RLM_part.+RH`  = "PM25_corr_RLM_rh_part",
+    `RLM+RH` =      "PM25_corr_RLM_rh",
+    `Laulainen` = "PM25_corr_Laulainen_rh",
+    `Koehler_mass` = "PM25_corr_koehler_mass",
+    `Koehler_size` = "PM25_corr_koehler_size",
+    `RLM_part.` = "PM25_corr_RLM_part"
+  )
+
+
+res_bus$cal_method <-
+  fct_relevel(
+    res_bus$cal_method,
+    "Initial",
+    "OLS",
+    "LR",
+    "MLR_RH",
+    "MLR_part.",
+    "MLR_part.+RH",
+    "RLM",
+    "RLM+RH",
+    "RLM_part.",
+    "RLM_part.+RH",
+    "Koehler_mass+LR",
+    "Koehler_mass+OLS",
+    "Koehler_size+LR",
+    "Koehler_size+OLS",
+    "Laulainen+LR",
+    "Laulainen+OLS"
+  )
+
+res_bus$scenario_type <-
+  fct_relevel(res_bus$scenario_type,
+              "2w8w",
+              "4w8w",
+              "1w8w1w",
+              "2w8w2w",
+              "2w16w2w",
+              "2w24w2w")
+
+```
+
+
+# Results
+
+
+## All methods
+
+
+
+
+```{r}
+p <- res %>%
+  dplyr::filter(grepl("PMS", sensor)) %>%
+  dplyr::filter(type == "Full") %>%
+  ggplot(aes(
+    x = as.factor(cal_method),
+    y = 100 * expanded_uncertainty,
+    colour = sensor
+  )) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.8,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  geom_hline(yintercept = 50, linetype = "dotted") +
+  geom_hline(yintercept = 25,
+             colour = "red",
+             linetype = "dotted") +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  facet_wrap( ~ scenario_type, ncol = 2, scales = "free_y") +
+  xlab("Calibration method") +
+  ylab(quickText("Expanded uncertainty (%)")) +
+  labs(colour = "Sensors")
+p
+
+p <- res %>%
+  dplyr::filter(grepl("SPS", sensor)) %>%
+  dplyr::filter(type == "Full") %>%
+  ggplot(aes(
+    x = as.factor(cal_method),
+    y = 100 * expanded_uncertainty,
+    colour = sensor
+  )) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.8,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  geom_hline(yintercept = 50, linetype = "dotted") +
+  geom_hline(yintercept = 25,
+             colour = "red",
+             linetype = "dotted") +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  facet_wrap( ~ scenario_type, ncol = 2, scales = "free_y") +
+  xlab("Calibration method") +
+  ylab(quickText("Expanded uncertainty (%)")) +
+  labs(colour = "Sensors")
+p
+
+```
+
+## Restricted number of methods
+
+```{r}
+
+
+p <- res %>%
+  dplyr::filter(grepl("PMS", sensor)) %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(
+    cal_method %in% c(
+      "Initial",
+      "RLM_part.+RH",
+      "RLM_part.",
+      "MLR_part.",
+      "MLR_part.+RH"
+    )
+  ) %>%
+  ggplot(aes(
+    x = as.factor(cal_method),
+    y = 100 * expanded_uncertainty,
+    colour = sensor
+  )) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.8,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  geom_hline(yintercept = 50, linetype = "dotted") +
+  geom_hline(yintercept = 25,
+             colour = "red",
+             linetype = "dotted") +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  facet_wrap( ~ scenario_type, ncol = 2, scales = "free_y") +
+  xlab("Calibration method") +
+  ylab(quickText("Expanded uncertainty (%)")) +
+  labs(colour = "Sensors")
+p
+
+
+
+p <- res %>%
+  dplyr::filter(grepl("SPS", sensor)) %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(
+    cal_method %in% c(
+      "Initial",
+      "RLM_part.+RH",
+      "RLM_part.",
+      "MLR_part.",
+      "MLR_part.+RH"
+    )
+  ) %>%
+  ggplot(aes(
+    x = as.factor(cal_method),
+    y = 100 * expanded_uncertainty,
+    colour = sensor
+  )) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.8,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  geom_hline(yintercept = 50, linetype = "dotted") +
+  geom_hline(yintercept = 25,
+             colour = "red",
+             linetype = "dotted") +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  facet_wrap( ~ scenario_type, ncol = 2, scales = "free_y") +
+  xlab("Calibration method") +
+  ylab(quickText("Expanded uncertainty (%)")) +
+  labs(colour = "Sensors") +
+  ylim(c(0, 100 * quantile(res[res$type == "Full" &
+                                 grepl("SPS", res$sensor) ,]$expanded_uncertainty, 0.9, na.rm = T)))
+p
+
+
+
+
+
+
+p <- res %>%
+  dplyr::filter(grepl("SPS", sensor)) %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(
+    cal_method %in% c(
+      "Initial",
+      "RLM_part.+RH",
+      "RLM_part.",
+      "MLR_part.",
+      "MLR_part.+RH"
+    )
+  ) %>%
+  ggplot(aes(
+    x = as.factor(cal_method),
+    y = 100 * expanded_uncertainty,
+    colour = scenario_type
+  )) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.8,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  geom_hline(yintercept = 50, linetype = "dotted") +
+  geom_hline(yintercept = 25,
+             colour = "red",
+             linetype = "dotted") +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  xlab("Calibration method") +
+  ylab(quickText("Expanded uncertainty (%)")) +
+  labs(colour = "Scenarios (SPS)") +
+  ylim(c(0, 100 * quantile(res[res$type == "Full" &
+                                 grepl("SPS", res$sensor) ,]$expanded_uncertainty, 0.9, na.rm = T)))
+#p
+
+
+p <- res %>%
+  dplyr::filter(type == "Full") %>%
+  dplyr::filter(!grepl("Koehler_size", cal_method)) %>%
+  dplyr::filter(!grepl("Koehler|Laul", cal_method)) %>%
+  dplyr::filter(
+    cal_method %in% c(
+      "Initial",
+      "RLM_part.+RH",
+      "RLM_part.",
+      "MLR_part.",
+      "MLR_part.+RH"
+    )
+  ) %>%
+  ggplot(aes(
+    x = as.factor(scenario_type),
+    y = 100 * expanded_uncertainty,
+    colour = cal_method
+  )) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.8,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  geom_hline(yintercept = 50, linetype = "dotted") +
+  geom_hline(yintercept = 25,
+             colour = "red",
+             linetype = "dotted") +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  facet_wrap( ~ sensor_type, nrow = 2, scales = "free") +
+  xlab("Scenarios") +
+  ylab(quickText("Expanded uncertainty (%)")) +
+  labs(colour = "Calibration methods") +
+  ylim(c(0, 100 * quantile(res[res$type == "Full" &
+                                 grepl("SPS", res$sensor) ,]$expanded_uncertainty, 0.9, na.rm = T)))
+p
+
+p %>%
+  ggsave(
+    filename = paste0(
+      PLOT_OUTPUT_FOLDER,
+      "expanded_uncertainty_PMS_SPS_daily_scenarios.png"
+    )
+  )
+
+```
+
+
+## Expanded uncertainty on split datasets
+
+### Scenario 2w8w2w
+
+```{r}
+p <- res %>%
+  dplyr::filter(sensor != "SPS-40N2") %>%
+  dplyr::filter(grepl("SPS", sensor)) %>%
+  dplyr::filter(
+    cal_method %in% c(
+      "Initial",
+      "RLM_part.+RH",
+      "RLM_part.",
+      "MLR_part.",
+      "MLR_part.+RH"
+    )
+  ) %>%
+  dplyr::filter(scenario_type == "2w8w2w") %>%
+  ggplot(aes(
+    x = cal_method,
+    y = 100 * expanded_uncertainty,
+    colour = sensor
+  )) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.8,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  geom_hline(yintercept = 50, linetype = "dotted") +
+  geom_hline(yintercept = 25,
+             colour = "red",
+             linetype = "dotted") +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  facet_wrap( ~ type, ncol = 2, scales = "free_y") +
+  xlab("Calibration method") +
+  ylab(quickText("Expanded uncertainty (%)")) +
+  labs(colour = "Sensors")
+p
+p %>%
+  ggsave(filename = "comparison_equivalence_sps_2w8w2w_split.png",
+         units = "mm",
+         width = 180)
+
+p <- res %>%
+  dplyr::filter(sensor != "PMS-60N1") %>%
+  dplyr::filter(sensor != "PMS-56N2") %>%
+  dplyr::filter(grepl("PMS", sensor)) %>%
+  dplyr::filter(scenario_type == "2w8w2w") %>%
+  dplyr::filter(
+    cal_method %in% c(
+      "Initial",
+      "RLM_part.+RH",
+      "RLM_part.",
+      "MLR_part.",
+      "MLR_part.+RH"
+    )
+  ) %>%
+  ggplot(aes(
+    x = cal_method,
+    y = 100 * expanded_uncertainty,
+    colour = sensor
+  )) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.8,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  geom_hline(yintercept = 50, linetype = "dotted") +
+  geom_hline(yintercept = 25,
+             colour = "red",
+             linetype = "dotted") +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  facet_wrap( ~ type, ncol = 2, scales = "free_y") +
+  xlab("Calibration method") +
+  ylab(quickText("Expanded uncertainty (%)")) +
+  labs(colour = "Sensors")
+p %>%
+  ggsave(filename = "comparison_equivalence_pms_2w8w2w_split.png",
+         units = "mm",
+         width = 180)
+
+p
+res %>%
+  dplyr::filter(scenario_type == "2w8w2w") %>%
+  dplyr::filter(sensor != "PMS-60N1") %>%
+  dplyr::filter(sensor != "PMS-56N2") %>%
+  dplyr::filter(sensor != "SPS-40N2") %>%
+  dplyr::filter(!grepl("80|85", cal_method)) %>%
+  dplyr::filter(
+    cal_method %in% c(
+      "Initial",
+      "RLM_part.+RH",
+      "RLM_part.",
+      "MLR_part.",
+      "MLR_part.+RH"
+    )
+  ) %>%
+  dplyr::filter(type == "Full") %>%
+  group_by(sensor_type, cal_method) %>%
+  summarise(
+    quant25 = quantile(
+      expanded_uncertainty,
+      probs = c(0.25),
+      na.rm = T
+    ),
+    median(expanded_uncertainty, na.rm = T),
+    quant75 = quantile(
+      expanded_uncertainty,
+      probs = c(0.75),
+      na.rm = T
+    )
+  )
+
+```
+### Scenario 2w24w2w
+
+```{r}
+p <- res %>%
+  dplyr::filter(sensor != "SPS-40N2") %>%
+  dplyr::filter(grepl("SPS", sensor)) %>%
+  dplyr::filter(
+    cal_method %in% c(
+      "Initial",
+      "RLM_part.+RH",
+      "RLM_part.",
+      "MLR_part.",
+      "MLR_part.+RH"
+    )
+  ) %>%
+  dplyr::filter(scenario_type == "2w24w2w") %>%
+  ggplot(aes(
+    x = cal_method,
+    y = 100 * expanded_uncertainty,
+    colour = sensor
+  )) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.8,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  geom_hline(yintercept = 50, linetype = "dotted") +
+  geom_hline(yintercept = 25,
+             colour = "red",
+             linetype = "dotted") +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  facet_wrap( ~ type, ncol = 2, scales = "free_y") +
+  xlab("Calibration method") +
+  ylab(quickText("Expanded uncertainty (%)")) +
+  labs(colour = "Sensors")
+p
+p %>%
+  ggsave(filename = "comparison_equivalence_sps_2w24w2w_split.png",
+         units = "mm",
+         width = 180)
+
+p <- res %>%
+  dplyr::filter(sensor != "PMS-60N1") %>%
+  dplyr::filter(sensor != "PMS-56N2") %>%
+  dplyr::filter(grepl("PMS", sensor)) %>%
+  dplyr::filter(scenario_type == "2w24w2w") %>%
+  dplyr::filter(
+    cal_method %in% c(
+      "Initial",
+      "RLM_part.+RH",
+      "RLM_part.",
+      "MLR_part.",
+      "MLR_part.+RH"
+    )
+  ) %>%
+  ggplot(aes(
+    x = cal_method,
+    y = 100 * expanded_uncertainty,
+    colour = sensor
+  )) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.8,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  geom_hline(yintercept = 50, linetype = "dotted") +
+  geom_hline(yintercept = 25,
+             colour = "red",
+             linetype = "dotted") +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  facet_wrap( ~ type, ncol = 2, scales = "free_y") +
+  xlab("Calibration method") +
+  ylab(quickText("Expanded uncertainty (%)")) +
+  labs(colour = "Sensors")
+p %>%
+  ggsave(filename = "comparison_equivalence_pms_2w24w2w_split.png",
+         units = "mm",
+         width = 180)
+
+p
+res %>%
+  dplyr::filter(scenario_type == "2w24w2w") %>%
+  dplyr::filter(!grepl("80|85", cal_method)) %>%
+  dplyr::filter(
+    cal_method %in% c(
+      "Initial",
+      "RLM_part.+RH",
+      "RLM_part.",
+      "MLR_part.",
+      "MLR_part.+RH"
+    )
+  ) %>%
+  dplyr::filter(type == "Full") %>%
+  group_by(sensor_type, cal_method) %>%
+  summarise(
+    quant25 = quantile(
+      expanded_uncertainty,
+      probs = c(0.25),
+      na.rm = T
+    ),
+    median(expanded_uncertainty, na.rm = T),
+    quant75 = quantile(
+      expanded_uncertainty,
+      probs = c(0.75),
+      na.rm = T
+    )
+  )
+
+```
+
+
+## Between unit uncertainty
+
+```{r}
+
+
+p_pms <- res_bus %>%
+  dplyr::mutate(sensor_type = ifelse(grepl("PMS", combination), "PMS5003", "SPS30")) %>%
+  dplyr::filter(grepl("PMS", combination)) %>%
+  dplyr::filter(scenario_type == "2w8w2w") %>%
+  dplyr::filter(!grepl("Koehler|Laul", cal_method)) %>%
+  ggplot(aes(x = cal_method, y = usb, colour = type)) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.8,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  geom_hline(yintercept = 5, linetype = "dotted") +
+  geom_hline(yintercept = 2.5,
+             colour = "red",
+             linetype = "dotted") +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  facet_wrap( ~ paste0(sensor_type, " - ", scenario_type),
+              ncol = 2,
+              scales = "free_y") +
+  xlab("Calibration method") +
+  ylab(quickText("Between unit uncertainty (ug/m3)")) +
+  labs(colour = "Dataset")
+p_pms
+
+p_pms %>%
+  ggsave(filename = "comparison_equivalence_pms_2w8w2w_split_buu.svg",
+         units = "mm",
+         width = 180)
+
+
+p_sps <- res_bus %>%
+  dplyr::mutate(sensor_type = ifelse(grepl("PMS", combination), "PMS5003", "SPS30")) %>%
+  dplyr::filter(grepl("SPS", combination)) %>%
+  dplyr::filter(scenario_type == "2w8w2w") %>%
+  dplyr::filter(!grepl("Koehler|Laul", cal_method)) %>%
+  ggplot(aes(x = cal_method, y = usb, colour = type)) +
+  stat_boxplot(geom = 'errorbar') +
+  geom_boxplot(
+    fatten = 0.8,
+    outlier.size = 0.8,
+    outlier.alpha = 0.5,
+    lwd = 0.2
+  ) +
+  geom_hline(yintercept = 5, linetype = "dotted") +
+  geom_hline(yintercept = 2.5,
+             colour = "red",
+             linetype = "dotted") +
+  custom_theme +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 0.95,
+    vjust = 0.2
+  )) +
+  facet_wrap( ~ paste0(sensor_type, " - ", scenario_type),
+              ncol = 2,
+              scales = "free_y") +
+  xlab("Calibration method") +
+  ylab(quickText("Between unit uncertainty (ug/m3)")) +
+  labs(colour = "Dataset")
+p_sps
+
+legend <- get_legend(p)
+
+
+prow <- plot_grid(
+  p_pms + theme(legend.position = "none"),
+  p_sps + theme(legend.position = "none"),
+  nrow = 2,
+  labels = c("(a)", "(b)"),
+  label_y = 0.1
+)
+
+
+
+pg <- plot_grid(prow, legend, ncol = 2 , rel_widths = c(1, .1))
+
+pg %>%
+  ggsave2(filename = "comparison_equivalence_2w8w2w_split_buu.svg",
+          units = "mm",
+          width = 180)
+
+
+res_bus %>%
+  dplyr::mutate(sensor_type = ifelse(grepl("PMS", combination), "PMS5003", "SPS30")) %>%
+  dplyr::filter(scenario_type == "2w8w2w") %>%
+  dplyr::filter(!grepl("Koehler|Laul", cal_method)) %>%
+  dplyr::filter(type == "Full") %>%
+  group_by(sensor_type, cal_method) %>%
+  summarise(
+    quant25 = quantile(usb, probs = c(0.25), na.rm = T),
+    median(usb, na.rm = T),
+    quant75 = quantile(usb, probs = c(0.75), na.rm = T)
+  )
+
+```
+
+
+

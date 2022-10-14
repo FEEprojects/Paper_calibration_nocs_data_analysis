@@ -1,5 +1,6 @@
 require(gbm)
 require(e1071)
+require(MASS)
 require(dplyr)
 
 #' Clean regression

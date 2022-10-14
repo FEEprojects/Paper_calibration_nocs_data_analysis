@@ -48,6 +48,8 @@ source("utilities/variables.r")
 require(tidytext)
 ```
 
+# Data preparation
+
 ```{r}
 
 input_folder <-

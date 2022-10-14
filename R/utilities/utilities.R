@@ -9,6 +9,7 @@ require(lubridate)
 require(splitstackshape)
 require(stringr)
 require(tidyr)
+require(purrr)
 
 
 custom_theme <- theme_bw() +

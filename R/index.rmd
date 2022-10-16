@@ -36,7 +36,17 @@ This folder contains the scripts used to conduct the analysis of the data
 collected at NOCS Southampton, with a Fidas 200S and 40 PM sensors between July
 2020 and July 2021 presented in the paper XXXXXXXX.
 
-# Data preparation
+# How to use this folder
+
+The data needs to be downloaded from ZENODO_REPOSITORY LINK and placed in the
+`data` folder in .rds format. Then the script `R/utilities/data_preparation.r`
+must be ran to tidy and collate the different datasets used in the study, see
+[Data preparation](#data_preparation) for more details.
+
+Finally, this document presents an explanation of the different analysis
+conducted.
+
+# Data preparation {#data_preparation}
 
 The datasets used during this analysis are:
 
@@ -53,8 +63,6 @@ The data from the Fidas 200S was extracted from the .promo files using PDAnalyze
 extracted from the .promo files were parsed and stored at:
 
 -   `data\df_pm_2min.rds` - PM concentrations
-
--   `data\df_distrib_2min.rds` - PM size distribution
 
 -   `data\df_weather_2min.rds` - weather data
 
@@ -100,7 +108,7 @@ The following points have been investigated:
     study, presented in [Calibration on 2 first weeks, performances on the
     year](calibration_2weeks_restoftheyear.html)
 
--    a robust selection of the calibration methods presented in [Calibration 2
+-   a robust selection of the calibration methods presented in [Calibration 2
     weeks 40 days](calibration_2weeks_40days.html).
 
 -   performances of calibration scenarios (length and duration of the

@@ -32,16 +32,20 @@ require(plotly)
 require(dplyr)
 ```
 
+The underlying code repository is available at:
+<https://github.com/FEEprojects/Paper_calibration_nocs_data_analysis>
+
 This folder contains the scripts used to conduct the analysis of the data
 collected at NOCS Southampton, with a Fidas 200S and 40 PM sensors between July
 2020 and July 2021 presented in the paper XXXXXXXX.
 
 # How to use this folder
 
-The data needs to be downloaded from ZENODO_REPOSITORY LINK and placed in the
-`data` folder in .rds format. Then the script `R/utilities/data_preparation.r`
-must be ran to tidy and collate the different datasets used in the study, see
-[Data preparation](#data_preparation) for more details.
+The data needs to be downloaded from <https://doi.org/10.5281/zenodo.7198378>
+and placed in the `data` folder in .rds format. Then the script
+`R/utilities/data_preparation.r` must be ran to tidy and collate the different
+datasets used in the study, see [Data preparation](#data_preparation) for more
+details.
 
 Finally, this document presents an explanation of the different analysis
 conducted.
@@ -112,7 +116,14 @@ The following points have been investigated:
     weeks 40 days](calibration_2weeks_40days.html).
 
 -   performances of calibration scenarios (length and duration of the
-    calibration), presented in XXXXXXXXXX
+    calibration), presented in [Calibration scenarios
+    comparison](calibration_scenarios_comparison.html).
+
+-   The calibration scenarios are then used to compare to the criteria of the
+    demonstration of equivalence, presented in [Calibration scenarios comparison
+    equivalence](calibration_scenarios_comparison_equivalence).#
+
+Each of these points is detailled further in the next sections.
 
 # Initial data exploration
 

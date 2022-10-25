@@ -1,4 +1,4 @@
-# Paper_calibration_nocs_data_analysis
+# Characterisation and calibration of low-cost PM sensors at high temporal resolution to reference grade performances
 
 This repository contains the scripts used for the analysis conducted in the paper "Characterisation and calibration of low-cost PM sensors at high temporal resolution to reference grade performances" submitted to Environmental Sciences and Technology.
 

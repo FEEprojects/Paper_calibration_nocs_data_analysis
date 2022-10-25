@@ -1,7 +1,7 @@
 ---
 title: "Calibration scenarios comparison"
-author: "FMJ Bulot"
-date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+author: "FMJ Bulot (florentin.bulot@centraliens.net)"
+date: "Last generated: `r format(Sys.time(), '%d %B, %Y, %H:%M')`"
 knit: (function(inputFile, encoding) { 
       out_dir <- '../docs/';
       rmarkdown::render(inputFile,
@@ -21,7 +21,7 @@ output:
 This notebook presents the results from the scripts in the folder 
 `calibration_Xweeks_Xmonths_equivalence`
 
-```{r}
+```{r, message=F}
 
 source("utilities/utilities.R")
 source("utilities/nested_models.r")
@@ -301,12 +301,7 @@ res$scenario_type <-
 res_bus$cal_method <-
   fct_recode(
     res_bus$cal_method,
-    `Koehler_mass+LR` = "koehlermasslr",
-    `Koehler_mass+OLS` = "koehlermassols",
-    `Koehler_size+LR` = "koehlersizelr",
-    `Koehler_size+OLS` =  "koehlersizeols",
     `Laulainen+LR` = "PM25_corr_Laulainen_rh_LR",
-    `Laulainen+OLS` = "laulainenols",
     `MLR_part.` =  "PM25_corr_lm_part_number",
     `MLR_part.+RH` =   "PM25_corr_lm_part_number_rh",
     `LR` = "PM25_corr_LR",
@@ -335,12 +330,7 @@ res_bus$cal_method <-
     "RLM+RH",
     "RLM_part.",
     "RLM_part.+RH",
-    "Koehler_mass+LR",
-    "Koehler_mass+OLS",
-    "Koehler_size+LR",
-    "Koehler_size+OLS",
-    "Laulainen+LR",
-    "Laulainen+OLS"
+    "Laulainen+LR"
   )
 
 res_bus$scenario_type <-

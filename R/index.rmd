@@ -1,7 +1,7 @@
 ---
 title: "Index"
-author: "FMJ Bulot"
-date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+author: "FMJ Bulot (florentin.bulot@centraliens.net)"
+date: "Last generated: `r format(Sys.time(), '%d %B, %Y, %H:%M')`"
 output:
   html_document:
     df_print: paged

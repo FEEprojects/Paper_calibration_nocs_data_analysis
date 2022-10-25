@@ -9,7 +9,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="FMJ Bulot" />
+<meta name="author" content="FMJ Bulot (florentin.bulot@centraliens.net)" />
 
 
 <title>Calibration scenarios comparison</title>
@@ -2867,8 +2867,8 @@ div.tocify {
 
 
 <h1 class="title toc-ignore">Calibration scenarios comparison</h1>
-<h4 class="author">FMJ Bulot</h4>
-<h4 class="date">14 October, 2022, 12:23</h4>
+<h4 class="author">FMJ Bulot (<a href="mailto:florentin.bulot@centraliens.net" class="email">florentin.bulot@centraliens.net</a>)</h4>
+<h4 class="date">Last generated: 25 October, 2022, 11:40</h4>
 
 </div>
 
@@ -2876,74 +2876,9 @@ div.tocify {
 <p>This notebook presents the results from the scripts in the folder
 <code>calibration_Xweeks_Xmonths_equivalence</code></p>
 <pre class="r"><code>source(&quot;utilities/utilities.R&quot;)</code></pre>
-<pre><code>## Loading required package: dplyr</code></pre>
-<pre><code>## 
-## Attaching package: &#39;dplyr&#39;</code></pre>
-<pre><code>## The following objects are masked from &#39;package:stats&#39;:
-## 
-##     filter, lag</code></pre>
-<pre><code>## The following objects are masked from &#39;package:base&#39;:
-## 
-##     intersect, setdiff, setequal, union</code></pre>
-<pre><code>## Loading required package: plotly</code></pre>
-<pre><code>## Loading required package: ggplot2</code></pre>
-<pre><code>## 
-## Attaching package: &#39;plotly&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:ggplot2&#39;:
-## 
-##     last_plot</code></pre>
-<pre><code>## The following object is masked from &#39;package:stats&#39;:
-## 
-##     filter</code></pre>
-<pre><code>## The following object is masked from &#39;package:graphics&#39;:
-## 
-##     layout</code></pre>
-<pre><code>## Loading required package: ggpubr</code></pre>
-<pre><code>## Loading required package: openair</code></pre>
 <pre><code>## Warning: package &#39;openair&#39; was built under R version 4.1.2</code></pre>
-<pre><code>## Loading required package: rstatix</code></pre>
-<pre><code>## 
-## Attaching package: &#39;rstatix&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:stats&#39;:
-## 
-##     filter</code></pre>
-<pre><code>## Loading required package: forcats</code></pre>
-<pre><code>## Loading required package: cowplot</code></pre>
-<pre><code>## 
-## Attaching package: &#39;cowplot&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:ggpubr&#39;:
-## 
-##     get_legend</code></pre>
-<pre><code>## Loading required package: lubridate</code></pre>
-<pre><code>## 
-## Attaching package: &#39;lubridate&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:cowplot&#39;:
-## 
-##     stamp</code></pre>
-<pre><code>## The following objects are masked from &#39;package:base&#39;:
-## 
-##     date, intersect, setdiff, union</code></pre>
-<pre><code>## Loading required package: splitstackshape</code></pre>
-<pre><code>## Loading required package: stringr</code></pre>
-<pre><code>## Loading required package: tidyr</code></pre>
-<pre><code>## Loading required package: purrr</code></pre>
-<pre class="r"><code>source(&quot;utilities/nested_models.r&quot;)</code></pre>
-<pre><code>## Loading required package: gbm</code></pre>
-<pre><code>## Loaded gbm 2.1.8</code></pre>
-<pre><code>## Loading required package: e1071</code></pre>
-<pre><code>## Loading required package: MASS</code></pre>
-<pre><code>## 
-## Attaching package: &#39;MASS&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:rstatix&#39;:
-## 
-##     select</code></pre>
-<pre><code>## The following object is masked from &#39;package:plotly&#39;:
-## 
-##     select</code></pre>
-<pre><code>## The following object is masked from &#39;package:dplyr&#39;:
-## 
-##     select</code></pre>
-<pre class="r"><code>source(&quot;utilities/variables.r&quot;)
+<pre class="r"><code>source(&quot;utilities/nested_models.r&quot;)
+source(&quot;utilities/variables.r&quot;)
 
 input_folder &lt;- paste0(here::here(), &quot;/output/calibration/scenarios/demo_equivalence/&quot;)</code></pre>
 <div id="data-preparation" class="section level1">
@@ -3201,12 +3136,7 @@ res$scenario_type &lt;-
 res_bus$cal_method &lt;-
   fct_recode(
     res_bus$cal_method,
-    `Koehler_mass+LR` = &quot;koehlermasslr&quot;,
-    `Koehler_mass+OLS` = &quot;koehlermassols&quot;,
-    `Koehler_size+LR` = &quot;koehlersizelr&quot;,
-    `Koehler_size+OLS` =  &quot;koehlersizeols&quot;,
     `Laulainen+LR` = &quot;PM25_corr_Laulainen_rh_LR&quot;,
-    `Laulainen+OLS` = &quot;laulainenols&quot;,
     `MLR_part.` =  &quot;PM25_corr_lm_part_number&quot;,
     `MLR_part.+RH` =   &quot;PM25_corr_lm_part_number_rh&quot;,
     `LR` = &quot;PM25_corr_LR&quot;,
@@ -3219,10 +3149,10 @@ res_bus$cal_method &lt;-
     `Koehler_mass` = &quot;PM25_corr_koehler_mass&quot;,
     `Koehler_size` = &quot;PM25_corr_koehler_size&quot;,
     `RLM_part.` = &quot;PM25_corr_RLM_part&quot;
-  )</code></pre>
-<pre><code>## Warning: Unknown levels in `f`: koehlermasslr, koehlermassols, koehlersizelr,
-## koehlersizeols, laulainenols</code></pre>
-<pre class="r"><code>res_bus$cal_method &lt;-
+  )
+
+
+res_bus$cal_method &lt;-
   fct_relevel(
     res_bus$cal_method,
     &quot;Initial&quot;,
@@ -3235,15 +3165,9 @@ res_bus$cal_method &lt;-
     &quot;RLM+RH&quot;,
     &quot;RLM_part.&quot;,
     &quot;RLM_part.+RH&quot;,
-    &quot;Koehler_mass+LR&quot;,
-    &quot;Koehler_mass+OLS&quot;,
-    &quot;Koehler_size+LR&quot;,
-    &quot;Koehler_size+OLS&quot;,
-    &quot;Laulainen+LR&quot;,
-    &quot;Laulainen+OLS&quot;
+    &quot;Laulainen+LR&quot;
   )</code></pre>
-<pre><code>## Warning: Unknown levels in `f`: Initial, Koehler_mass+LR, Koehler_mass+OLS,
-## Koehler_size+LR, Koehler_size+OLS, Laulainen+OLS</code></pre>
+<pre><code>## Warning: Unknown levels in `f`: Initial</code></pre>
 <pre class="r"><code>res_bus$scenario_type &lt;-
   fct_relevel(res_bus$scenario_type,
               &quot;2w8w&quot;,

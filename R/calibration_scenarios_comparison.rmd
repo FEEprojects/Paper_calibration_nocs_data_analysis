@@ -1,9 +1,9 @@
 ---
 title: "Calibration scenarios comparison"
-author: "FMJ Bulot"
-date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+author: "FMJ Bulot (florentin.bulot@centraliens.net)"
+date: "Last generated: `r format(Sys.time(), '%d %B, %Y, %H:%M')`"
 knit: (function(inputFile, encoding) { 
-      out_dir <- '../../docs/';
+      out_dir <- '../docs/';
       rmarkdown::render(inputFile,
                         encoding=encoding, 
                         output_file=file.path(dirname(inputFile), out_dir, 'calibration_scenarios_comparison.html'))})
@@ -21,25 +21,33 @@ editor_options:
 ---
 
 This notebook explores the results from the scripts in the folder
-`calibration_scenarios_Xweeks_Xmonths`. Note that these scripts require a lot
-of computational time and a lost of space to store the results of the 
-different calibration (about 174Gb).
-For each calibration scenario, the script has been divided into several files 
-so they can be ran in parallel (for instance
-using background jobs, launched from the root directory) to speed up the 
-calculations.
+`calibration_scenarios_Xweeks_Xmonths`. Note that these scripts require a lot of
+computational time and a lost of space to store the results of the different
+calibration (about 174Gb). For each calibration scenario, the script has been
+divided into several files so they can be ran in parallel (for instance using
+background jobs, launched from the root directory) to speed up the calculations.
 
-These represents the different calibration scenarios presented in the paper: - 1
-week of pre-deployment calibration, 2 months of evaluation, 1 week of
-post-deployment calibration - 2 weeks of pre-deployment calibration, 2 months of
-evaluation, 2 weeks of post-deployment calibration - 2 weeks of pre-deployment
-calibration, 4 months of evaluation, 2 weeks of post-deployment calibration - 2
-weeks of pre-deployment calibration, 6 months of evaluation, 2 weeks of
-post-deployment calibration - 1 week of pre-deployment calibration, 2 months of
-evaluation - 2 weeks of pre-deployment calibration, 2 months of evaluation - 4
-weeks of pre-deployment calibration, 2 months of evaluation
+These represents the different calibration scenarios presented in the paper:
 
-```{r}
+-   1 week of pre-deployment calibration, 2 months of evaluation, 1 week of
+    post-deployment calibration
+
+-   2 weeks of pre-deployment calibration, 2 months of evaluation, 2 weeks of
+    post-deployment calibration
+
+-   2 weeks of pre-deployment calibration, 4 months of evaluation, 2 weeks of
+    post-deployment calibration
+
+-   2 weeks of pre-deployment calibration, 6 months of evaluation, 2 weeks of
+    post-deployment calibration
+
+-   1 week of pre-deployment calibration, 2 months of evaluation
+
+-   2 weeks of pre-deployment calibration, 2 months of evaluation
+
+-   4 weeks of pre-deployment calibration, 2 months of evaluation
+
+```{r, message=F}
 
 source("utilities/utilities.R")
 source("utilities/nested_models.r")
@@ -323,11 +331,10 @@ pg_l
 
 ## On RLM_part.+RH only
 
-In this section we only focus on the four methods that performed both during the 
+In this section we only focus on the four methods that performed both during the
 robust method selection ((presented in in [Calibration 2 weeks 40
 days](calibration_2weeks_40days.html)), with a special focus on RLM_part.+RH for
 clarity in the graph.
-
 
 ```{r}
 
@@ -687,7 +694,6 @@ p_r2
 
 
 ```
-
 
 # Results in tables
 
